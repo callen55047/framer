@@ -1,0 +1,35 @@
+{
+  "name": "framer",
+  "private": true,
+  "version": "0.1.0",
+  "description": "MTB price tracking and build speccing app",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "engines": {
+    "node": ">=22.4"
+  },
+  "scripts": {
+    "clean": "npm run clean --workspaces --if-present",
+    "build": "npm run clean && npm run build -w @framer/schema && npm run build -w @framer/runner && npm run build -w @framer/web && npm run build -w @framer/api",
+    "dev": "concurrently -k -n schema,web,api -c yellow,blue,green \"npm run dev -w @framer/schema\" \"npm run dev -w @framer/web\" \"npm run dev -w @framer/api\"",
+    "start": "npm run build && npm run start -w @framer/api",
+    "dev:api": "npm run dev --workspace=@framer/api",
+    "dev:web": "npm run dev --workspace=@framer/web",
+    "dev:runner": "npm run dev --workspace=@framer/runner",
+    "verify:queue": "npm run verify:queue --workspace=@framer/api",
+    "replay": "npm run replay --workspace=@framer/runner",
+    "worker": "npm run worker --workspace=@framer/runner",
+    "benchmark": "npm run benchmark --workspace=@framer/runner",
+    "benchmark:save-baseline": "npm run benchmark:save-baseline --workspace=@framer/runner",
+    "benchmark:compare": "npm run benchmark:compare --workspace=@framer/runner",
+    "verify:poc": "npm run verify:poc --workspace=@framer/runner",
+    "test": "npm run test --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2",
+    "typescript": "^5.6.3"
+  }
+}

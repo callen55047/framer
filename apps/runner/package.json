@@ -1,0 +1,59 @@
+{
+  "name": "@framer/runner",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./pipeline.js": {
+      "types": "./dist/pipeline.d.ts",
+      "default": "./dist/pipeline.js"
+    },
+    "./lib/jobApi.js": {
+      "types": "./dist/lib/jobApi.d.ts",
+      "default": "./dist/lib/jobApi.js"
+    },
+    "./lib/apiClient.js": {
+      "types": "./dist/lib/apiClient.d.ts",
+      "default": "./dist/lib/apiClient.js"
+    },
+    "./lib/httpJobApi.js": {
+      "types": "./dist/lib/httpJobApi.d.ts",
+      "default": "./dist/lib/httpJobApi.js"
+    },
+    "./config.js": {
+      "types": "./dist/config.d.ts",
+      "default": "./dist/config.js"
+    }
+  },
+  "scripts": {
+    "clean": "tsc -b --clean && rm -rf dist",
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc -b",
+    "start": "node dist/index.js",
+    "replay": "tsx scripts/replay.ts",
+    "worker": "tsx scripts/manualWorker.ts",
+    "benchmark": "tsx scripts/benchmark.ts",
+    "benchmark:save-baseline": "tsx scripts/save-baseline.ts",
+    "benchmark:compare": "tsx scripts/compare-baselines.ts",
+    "verify:poc": "tsx scripts/verify-poc.ts",
+    "test": "vitest run",
+    "typecheck": "tsc -b --noEmit false"
+  },
+  "dependencies": {
+    "@framer/schema": "*",
+    "cheerio": "^1.0.0",
+    "dotenv": "^16.4.7",
+    "zod": "^3.23.8",
+    "zod-to-json-schema": "^3.23.5"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "tsx": "^4.19.2",
+    "typescript": "^5.6.3",
+    "vitest": "^3.0.5"
+  }
+}

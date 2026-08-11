@@ -1,0 +1,103 @@
+{
+  "baselineId": "lmstudio/qwen3.5-9b-deepseek-v4-flash",
+  "savedAt": "2026-08-07T17:04:16.485Z",
+  "notes": "LM Studio local server; reasoning enabled; quality gate pass; full gate fail at 60s latency budget",
+  "report": {
+    "generatedAt": "2026-08-07T17:04:16.485Z",
+    "mockMode": false,
+    "maxLatencyMs": 60000,
+    "providers": ["lmstudio"],
+    "results": [
+      {
+        "fixtureId": "jenson-wheel",
+        "provider": "lmstudio",
+        "model": "qwen3.5-9b-deepseek-v4-flash",
+        "baseUrl": "http://localhost:1234/v1",
+        "schemaValid": true,
+        "grounded": true,
+        "groundedFields": ["title", "price", "brand"],
+        "ungroundedFields": [],
+        "latencyMs": 220938,
+        "withinLatencyBudget": false,
+        "passed": false,
+        "extraction": {
+          "title": "DT Swiss XM 1700 SPLINE 29 Wheelset",
+          "price": 599.99,
+          "currency": "USD",
+          "inStock": true,
+          "brand": "DT Swiss",
+          "modelYear": null
+        }
+      },
+      {
+        "fixtureId": "competitive-fork",
+        "provider": "lmstudio",
+        "model": "qwen3.5-9b-deepseek-v4-flash",
+        "baseUrl": "http://localhost:1234/v1",
+        "schemaValid": true,
+        "grounded": true,
+        "groundedFields": ["title", "price", "brand"],
+        "ungroundedFields": [],
+        "latencyMs": 119087,
+        "withinLatencyBudget": false,
+        "passed": false,
+        "extraction": {
+          "title": "RockShox Lyrik Ultimate Fork SRAM",
+          "price": 899,
+          "currency": "USD",
+          "inStock": true,
+          "brand": "RockShox",
+          "modelYear": null
+        }
+      },
+      {
+        "fixtureId": "rei-frame",
+        "provider": "lmstudio",
+        "model": "qwen3.5-9b-deepseek-v4-flash",
+        "baseUrl": "http://localhost:1234/v1",
+        "schemaValid": true,
+        "grounded": true,
+        "groundedFields": ["title", "price", "brand"],
+        "ungroundedFields": [],
+        "latencyMs": 208806,
+        "withinLatencyBudget": false,
+        "passed": false,
+        "extraction": {
+          "title": "Specialized Stumpjumper Alloy Frame",
+          "price": 2499,
+          "currency": "USD",
+          "inStock": false,
+          "brand": "Specialized",
+          "modelYear": null
+        }
+      },
+      {
+        "fixtureId": "worldwide-pedals",
+        "provider": "lmstudio",
+        "model": "qwen3.5-9b-deepseek-v4-flash",
+        "baseUrl": "http://localhost:1234/v1",
+        "schemaValid": true,
+        "grounded": true,
+        "groundedFields": ["title", "price", "brand"],
+        "ungroundedFields": [],
+        "latencyMs": 195690,
+        "withinLatencyBudget": false,
+        "passed": false,
+        "extraction": {
+          "title": "Shimano Deore XT PD-M8100 Pedals",
+          "price": 129.99,
+          "currency": "USD",
+          "inStock": true,
+          "brand": "Shimano",
+          "modelYear": null
+        }
+      }
+    ],
+    "summary": {
+      "total": 4,
+      "passed": 0,
+      "failed": 4,
+      "gatePassed": false
+    }
+  }
+}

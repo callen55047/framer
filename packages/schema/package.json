@@ -1,0 +1,29 @@
+{
+  "name": "@framer/schema",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": "./dist/index.js",
+    "./browser": {
+      "types": "./dist/browser.d.ts",
+      "default": "./dist/browser.js"
+    }
+  },
+  "scripts": {
+    "clean": "tsc -b --clean && rm -rf dist",
+    "build": "tsc -b && cp -r data dist/data",
+    "dev": "tsc -b --watch",
+    "test": "vitest run",
+    "typecheck": "tsc -b --noEmit false"
+  },
+  "dependencies": {
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3",
+    "vitest": "^3.0.5"
+  }
+}

@@ -1,0 +1,63 @@
+{
+  "version": 1,
+  "description": "Curated retailer Listing HTML fixtures for local-model POC benchmarking. Synthetic pages with verbatim title/price text for grounding checks.",
+  "maxLatencyMs": 60000,
+  "fixtures": [
+    {
+      "id": "jenson-wheel",
+      "retailer": "jensonusa.com",
+      "domain": "www.jensonusa.com",
+      "url": "https://www.jensonusa.com/dt-swiss-xm-1700-spline-29-wheelset",
+      "fixturePath": "jenson-wheel.html",
+      "capturedAt": "2026-08-07T12:00:00Z",
+      "expected": {
+        "title": "DT Swiss XM 1700 SPLINE 29 Wheelset",
+        "price": 599.99,
+        "currency": "USD",
+        "inStock": true
+      }
+    },
+    {
+      "id": "competitive-fork",
+      "retailer": "competitivecyclist.com",
+      "domain": "www.competitivecyclist.com",
+      "url": "https://www.competitivecyclist.com/rockshox-lyrik-ultimate-fork",
+      "fixturePath": "competitive-fork.html",
+      "capturedAt": "2026-08-07T12:00:00Z",
+      "expected": {
+        "title": "RockShox Lyrik Ultimate Fork",
+        "price": 899,
+        "currency": "USD",
+        "inStock": true
+      }
+    },
+    {
+      "id": "rei-frame",
+      "retailer": "rei.com",
+      "domain": "www.rei.com",
+      "url": "https://www.rei.com/product/specialized-stumpjumper-frame",
+      "fixturePath": "rei-frame.html",
+      "capturedAt": "2026-08-07T12:00:00Z",
+      "expected": {
+        "title": "Specialized Stumpjumper Alloy Frame",
+        "price": 2499,
+        "currency": "USD",
+        "inStock": false
+      }
+    },
+    {
+      "id": "worldwide-pedals",
+      "retailer": "worldwidecyclery.com",
+      "domain": "worldwidecyclery.com",
+      "url": "https://worldwidecyclery.com/products/shimano-deore-xt-pedals",
+      "fixturePath": "worldwide-pedals.html",
+      "capturedAt": "2026-08-07T12:00:00Z",
+      "expected": {
+        "title": "Shimano Deore XT PD-M8100 Pedals",
+        "price": 129.99,
+        "currency": "USD",
+        "inStock": true
+      }
+    }
+  ]
+}

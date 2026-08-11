@@ -1,0 +1,26 @@
+node_modules/
+dist/
+build/
+*.log
+.env
+.env.local
+.DS_Store
+.data/
+
+# Runner artifacts are large and reproducible from network sources; not committed.
+artifacts/*
+!artifacts/.gitkeep
+
+# POC benchmark ephemeral output (committed baselines live under fixtures/poc/baselines/)
+apps/runner/fixtures/poc/benchmark-results.json
+apps/runner/fixtures/poc/last-benchmark.md
+
+*.tsbuildinfo
+coverage/
+
+# IDE / editor
+.cursor/
+
+# Env files — keep examples
+.env.*
+!.env.example

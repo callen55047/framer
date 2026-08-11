@@ -1,0 +1,162 @@
+[
+  {
+    "id": "shimano-product-information",
+    "name": "Shimano Product Information",
+    "url": "https://productinfo.shimano.com/",
+    "category": "manufacturer_specs",
+    "domains": ["productinfo.shimano.com"],
+    "jobKinds": ["ExtractSpecs"]
+  },
+  {
+    "id": "sram-service",
+    "name": "SRAM Service",
+    "url": "https://www.sram.com/en/service",
+    "category": "manufacturer_specs",
+    "domains": ["sram.com"],
+    "jobKinds": ["ExtractSpecs"]
+  },
+  {
+    "id": "rockshox-trailhead",
+    "name": "RockShox TrailHead",
+    "url": "https://trailhead.rockshox.com/",
+    "category": "manufacturer_specs",
+    "domains": ["trailhead.rockshox.com"],
+    "jobKinds": ["ExtractSpecs"]
+  },
+  {
+    "id": "fox-bike-tech-help-center",
+    "name": "FOX Bike Tech Help Center",
+    "url": "https://tech.ridefox.com/bike/",
+    "category": "manufacturer_specs",
+    "domains": ["tech.ridefox.com"],
+    "jobKinds": ["ExtractSpecs"]
+  },
+  {
+    "id": "park-tool-repair-help",
+    "name": "Park Tool Repair Help",
+    "url": "https://www.parktool.com/en-us/blog/repair-help",
+    "category": "technical_reference",
+    "domains": ["parktool.com"],
+    "jobKinds": ["ExtractSpecs"]
+  },
+  {
+    "id": "specshift",
+    "name": "Specshift",
+    "url": "https://www.specshift.bike/",
+    "category": "component_database",
+    "domains": ["specshift.bike"],
+    "jobKinds": ["ExtractSpecs"]
+  },
+  {
+    "id": "99-spokes",
+    "name": "99 Spokes",
+    "url": "https://99spokes.com/",
+    "category": "bike_specs",
+    "domains": ["99spokes.com"],
+    "jobKinds": ["ExtractSpecs"]
+  },
+  {
+    "id": "bicycle-rolling-resistance",
+    "name": "Bicycle Rolling Resistance",
+    "url": "https://www.bicyclerollingresistance.com/mtb-reviews",
+    "category": "tire_testing",
+    "domains": ["bicyclerollingresistance.com"],
+    "jobKinds": ["ExtractSpecs"]
+  },
+  {
+    "id": "pinkbike",
+    "name": "Pinkbike",
+    "url": "https://www.pinkbike.com/",
+    "category": "news_reviews",
+    "domains": ["pinkbike.com"],
+    "jobKinds": ["RefreshListing", "DiscoverListings"]
+  },
+  {
+    "id": "vital-mtb",
+    "name": "Vital MTB",
+    "url": "https://www.vitalmtb.com/",
+    "category": "news_reviews",
+    "domains": ["vitalmtb.com"],
+    "jobKinds": ["DiscoverListings"]
+  },
+  {
+    "id": "bikeradar",
+    "name": "BikeRadar",
+    "url": "https://www.bikeradar.com/",
+    "category": "news_reviews",
+    "domains": ["bikeradar.com"],
+    "jobKinds": ["DiscoverListings"]
+  },
+  {
+    "id": "singletracks",
+    "name": "Singletracks",
+    "url": "https://www.singletracks.com/",
+    "category": "news_reviews",
+    "domains": ["singletracks.com"],
+    "jobKinds": ["DiscoverListings"]
+  },
+  {
+    "id": "the-loam-wolf",
+    "name": "The Loam Wolf",
+    "url": "https://theloamwolf.com/",
+    "category": "product_testing",
+    "domains": ["theloamwolf.com"],
+    "jobKinds": ["DiscoverListings"]
+  },
+  {
+    "id": "blister",
+    "name": "BLISTER",
+    "url": "https://blisterreview.com/",
+    "category": "product_testing",
+    "domains": ["blisterreview.com"],
+    "jobKinds": ["DiscoverListings"]
+  },
+  {
+    "id": "nsmb",
+    "name": "NSMB",
+    "url": "https://nsmb.com/",
+    "category": "product_testing",
+    "domains": ["nsmb.com"],
+    "jobKinds": ["DiscoverListings"]
+  },
+  {
+    "id": "jenson-usa",
+    "name": "Jenson USA",
+    "url": "https://www.jensonusa.com/",
+    "category": "retailer_pricing",
+    "domains": ["jensonusa.com"],
+    "jobKinds": ["RefreshListing", "DiscoverListings"]
+  },
+  {
+    "id": "worldwide-cyclery",
+    "name": "Worldwide Cyclery",
+    "url": "https://www.worldwidecyclery.com/",
+    "category": "retailer_pricing_specs",
+    "domains": ["worldwidecyclery.com"],
+    "jobKinds": ["RefreshListing", "DiscoverListings"]
+  },
+  {
+    "id": "competitive-cyclist",
+    "name": "Competitive Cyclist",
+    "url": "https://www.competitivecyclist.com/",
+    "category": "retailer_pricing",
+    "domains": ["competitivecyclist.com"],
+    "jobKinds": ["RefreshListing", "DiscoverListings"]
+  },
+  {
+    "id": "bike-discount",
+    "name": "Bike-Discount",
+    "url": "https://www.bike-discount.de/",
+    "category": "retailer_pricing",
+    "domains": ["bike-discount.de"],
+    "jobKinds": ["RefreshListing", "DiscoverListings"]
+  },
+  {
+    "id": "bike24",
+    "name": "BIKE24",
+    "url": "https://www.bike24.com/",
+    "category": "retailer_pricing_specs",
+    "domains": ["bike24.com"],
+    "jobKinds": ["RefreshListing", "DiscoverListings"]
+  }
+]
