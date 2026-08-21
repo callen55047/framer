@@ -57,7 +57,7 @@ Something the user asked for, and the unit the Tasks tab lists. Spawns one or mo
 _Avoid_: Request, query
 
 **Job**:
-A unit of background work of one enumerated kind, claimed and completed by any HTTP **executor** (manual worker, Runner daemon, or future remote agent) on behalf of a **Task**. Jobs in one Task may form a linear chain: a Job becomes claimable only after its predecessor succeeds. Each kind declares an input schema, an output schema, and a validator. Kinds include `Acknowledge` (pipeline proof, no stages), `RefreshListing`, `ExtractSpecs`, and `DiscoverListings`.
+A unit of background work of one enumerated kind, claimed and completed by any HTTP **executor** (manual worker, Runner daemon, or future remote agent) on behalf of a **Task**. Jobs in one Task may form a linear chain: a Job becomes claimable only after its predecessor succeeds. A Job may declare a not-before time, becoming claimable only once that moment passes; repeated triggers push the time out rather than queueing duplicates. Each kind declares an input schema, an output schema, and a validator. Kinds include `Acknowledge` (pipeline proof, no stages), `RefreshListing`, `SummarizeChatSession`, `ExtractSpecs`, and `DiscoverListings`.
 _Avoid_: Action, item
 
 **Stage**:
@@ -87,6 +87,24 @@ _Avoid_: Cron, schedule, poller
 **Reference source**:
 A known website in the project's fetch inventory — manufacturer spec pages, retailers, compatibility databases, or review sites — each with a category and allowed job kinds. The Runner may warn or block fetches to domains outside this registry depending on configuration. See `docs/reference-sources.md`.
 _Avoid_: Trusted source, whitelist entry
+
+### Assistant
+
+**Assistant Session**:
+A named, persisted conversation with the AI assistant, owned by the local owner, hard-capped at a 128k-token context budget. When the budget is reached, the Session is `full` and stops accepting new messages — the user starts a new Session rather than the old one silently truncating.
+_Avoid_: Thread, conversation
+
+**Message**:
+One turn in an **Assistant Session** — `user`, `assistant`, or `tool` role. Tool messages record a **Tool Call**'s name, arguments, and result.
+_Avoid_: Chat entry, prompt
+
+**Tool Call**:
+A read-only lookup the assistant issues mid-turn to pull in just the domain data it needs, instead of the server stuffing everything into the prompt upfront. Shown in the transcript as a collapsed step, same transparency pattern as Job **Stage**s.
+_Avoid_: Function call, API call
+
+**Session Summary**:
+A compressed representation of one **Assistant Session**, rebuilt by a background **Job** once the Session has been quiet for several minutes. Its reader is a *later* **Session**: the assistant lists past Sessions and pulls the summary of a relevant one through a **Tool Call**. Never injected into a turn, and never a stand-in for the current Session's own transcript.
+_Avoid_: Chat memory, context window hack
 
 ## Flagged ambiguities
 

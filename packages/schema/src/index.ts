@@ -14,3 +14,4 @@ export * from "./listingItem.js";
 export * from "./relevance.js";
 export * from "./bikeConfig.js";
 export * from "./variant.js";
+export * from "./chat.js";

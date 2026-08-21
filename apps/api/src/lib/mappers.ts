@@ -167,3 +167,53 @@ export function mapArtifact(row: any) {
     createdAt: toIso(row.created_at),
   };
 }
+
+export function mapChatSession(row: any) {
+  return {
+    id: row.id,
+    ownerId: row.owner_id,
+    title: row.title,
+    titleSource: row.title_source ?? "auto",
+    provider: row.provider,
+    model: row.model,
+    contextBudgetTokens: toNumber(row.context_budget_tokens) ?? 128000,
+    tokenCount: toNumber(row.token_count) ?? 0,
+    status: row.status,
+    summary: row.summary ?? null,
+    summaryUpdatedAt: toIso(row.summary_updated_at),
+    summaryThroughMessageId: row.summary_through_message_id ?? null,
+    summaryStatus: row.summary_status ?? (row.summary ? "stale" : "none"),
+    createdAt: toIso(row.created_at),
+    updatedAt: toIso(row.updated_at),
+  };
+}
+
+export function mapChatMessage(row: any) {
+  let toolArgs: Record<string, unknown> | null = null;
+  let toolResult: unknown = null;
+  if (row.tool_args) {
+    try {
+      toolArgs = typeof row.tool_args === "string" ? JSON.parse(row.tool_args) : row.tool_args;
+    } catch {
+      toolArgs = null;
+    }
+  }
+  if (row.tool_result) {
+    try {
+      toolResult = typeof row.tool_result === "string" ? JSON.parse(row.tool_result) : row.tool_result;
+    } catch {
+      toolResult = row.tool_result;
+    }
+  }
+  return {
+    id: row.id,
+    sessionId: row.session_id,
+    role: row.role,
+    content: row.content ?? "",
+    toolName: row.tool_name ?? null,
+    toolArgs,
+    toolResult,
+    tokenCount: toNumber(row.token_count) ?? 0,
+    createdAt: toIso(row.created_at),
+  };
+}

@@ -27,6 +27,22 @@
     "./config.js": {
       "types": "./dist/config.d.ts",
       "default": "./dist/config.js"
+    },
+    "./inference/createProvider.js": {
+      "types": "./dist/inference/createProvider.d.ts",
+      "default": "./dist/inference/createProvider.js"
+    },
+    "./inference/types.js": {
+      "types": "./dist/inference/types.d.ts",
+      "default": "./dist/inference/types.js"
+    },
+    "./inference/loadConfig.js": {
+      "types": "./dist/inference/loadConfig.d.ts",
+      "default": "./dist/inference/loadConfig.js"
+    },
+    "./lib/referencePageFetch.js": {
+      "types": "./dist/lib/referencePageFetch.d.ts",
+      "default": "./dist/lib/referencePageFetch.js"
     }
   },
   "scripts": {

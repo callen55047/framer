@@ -14,6 +14,7 @@ export const JobKindSchema = z.enum([
   "RefreshListing",
   "ExtractSpecs",
   "DiscoverListings",
+  "SummarizeChatSession",
 ]);
 export type JobKind = z.infer<typeof JobKindSchema>;
 
@@ -96,11 +97,25 @@ export const RefreshListingOutputSchema = z.object({
 });
 export type RefreshListingOutput = z.infer<typeof RefreshListingOutputSchema>;
 
+/** Rolling summary of an Assistant Session's messages. */
+export const SummarizeChatSessionInputSchema = z.object({
+  sessionId: IdSchema,
+});
+export type SummarizeChatSessionInput = z.infer<typeof SummarizeChatSessionInputSchema>;
+
+export const SummarizeChatSessionOutputSchema = z.object({
+  summary: z.string(),
+  messageCount: z.number().int().nonnegative(),
+  summarizedAt: z.string().datetime(),
+});
+export type SummarizeChatSessionOutput = z.infer<typeof SummarizeChatSessionOutputSchema>;
+
 export const JobInputSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("Acknowledge"), payload: AcknowledgeInputSchema }),
   z.object({ kind: z.literal("RefreshListing"), payload: RefreshListingInputSchema }),
   z.object({ kind: z.literal("ExtractSpecs"), payload: z.record(z.unknown()) }),
   z.object({ kind: z.literal("DiscoverListings"), payload: z.record(z.unknown()) }),
+  z.object({ kind: z.literal("SummarizeChatSession"), payload: SummarizeChatSessionInputSchema }),
 ]);
 export type JobInput = z.infer<typeof JobInputSchema>;
 
@@ -140,6 +155,8 @@ export function parseJobOutput(kind: JobKind, output: unknown): Record<string, u
       return AcknowledgeOutputSchema.parse(output);
     case "RefreshListing":
       return RefreshListingOutputSchema.parse(output);
+    case "SummarizeChatSession":
+      return SummarizeChatSessionOutputSchema.parse(output);
     case "ExtractSpecs":
     case "DiscoverListings":
       return z.record(z.unknown()).parse(output);

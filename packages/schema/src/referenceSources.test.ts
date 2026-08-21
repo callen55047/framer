@@ -1,11 +1,13 @@
 import { describe, expect, it } from "vitest";
 import {
   REFERENCE_SOURCES,
+  buildReferenceSearchUrl,
   findReferenceSourceByDomain,
   findReferenceSourceByUrl,
   getReferenceSourcesForJobKind,
   isRetailerReferenceSource,
   normalizeDomain,
+  pickReferenceSourceForCategory,
 } from "./referenceSources.js";
 
 describe("referenceSources", () => {
@@ -45,5 +47,13 @@ describe("referenceSources", () => {
 
   it("normalizes domains consistently", () => {
     expect(normalizeDomain("WWW.JensonUSA.com")).toBe("jensonusa.com");
+  });
+
+  it("builds search URLs from templates", () => {
+    const source = pickReferenceSourceForCategory("component_database", "fox fork");
+    expect(source?.id).toBe("specshift");
+    expect(buildReferenceSearchUrl(source!, "fox fork")).toBe(
+      "https://www.specshift.bike/search?q=fox%20fork"
+    );
   });
 });

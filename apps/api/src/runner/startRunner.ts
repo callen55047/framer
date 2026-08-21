@@ -1,12 +1,13 @@
 import { mkdirSync } from "node:fs";
-import type { JobKind } from "@framer/schema";
 import { configureJobApi } from "@framer/runner/lib/jobApi.js";
 import { reloadInferenceFromEnv } from "@framer/runner/config.js";
 import { runJob } from "@framer/runner/pipeline.js";
+import type { JobKind, JobRecord } from "@framer/schema";
 import { config } from "../config.js";
 import { createInternalJobApi } from "./internalJobApi.js";
+import { runSummarizeChatSessionJob } from "../services/chatSummarizeService.js";
 
-const IMPLEMENTED_KINDS: JobKind[] = ["Acknowledge", "RefreshListing"];
+const IMPLEMENTED_KINDS: JobKind[] = ["Acknowledge", "RefreshListing", "SummarizeChatSession"];
 
 function applyRunnerInferenceEnv(): void {
   process.env.INFERENCE_PROVIDER = config.runner.inferenceProvider;
@@ -64,7 +65,12 @@ export function startIntegratedRunner(): void {
     }, heartbeatMs);
 
     try {
-      await runJob(job);
+      if (job.kind === "SummarizeChatSession") {
+        const output = await runSummarizeChatSessionJob(job);
+        await jobApi.completeJob(job.id, output);
+      } else {
+        await runJob(job);
+      }
     } finally {
       clearInterval(heartbeat);
       jobApi.clearActiveLease();

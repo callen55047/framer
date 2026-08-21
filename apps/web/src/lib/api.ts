@@ -124,6 +124,44 @@ export interface Job {
   stages: Stage[];
 }
 
+export interface ChatSession {
+  id: string;
+  ownerId: string;
+  title: string;
+  titleSource: "user" | "auto";
+  provider: string;
+  model: string;
+  contextBudgetTokens: number;
+  tokenCount: number;
+  status: "active" | "full";
+  summary?: string | null;
+  summaryUpdatedAt?: string | null;
+  summaryThroughMessageId?: string | null;
+  summaryStatus: "none" | "stale" | "current";
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ChatMessage {
+  id: string;
+  sessionId: string;
+  role: "user" | "assistant" | "tool";
+  content: string;
+  toolName: string | null;
+  toolArgs: Record<string, unknown> | null;
+  toolResult: unknown;
+  tokenCount: number;
+  createdAt: string;
+}
+
+export interface ChatStreamHandlers {
+  onTextDelta?: (delta: string) => void;
+  onMessage?: (message: ChatMessage) => void;
+  onToolCall?: (toolName: string, toolArgs: Record<string, unknown>) => void;
+  onSessionUpdate?: (session: ChatSession) => void;
+  onError?: (error: string) => void;
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`/api${path}`, {
     ...init,
@@ -167,4 +205,66 @@ export const api = {
   getTask: (taskId: string) => request<{ task: Task; jobs: Job[] }>(`/tasks/${taskId}`),
   createAcknowledgeProof: (steps = 1) =>
     request<{ task: Task; jobs: Job[] }>(`/tasks/acknowledge-proof?steps=${steps}`, { method: "POST" }),
+  listChatSessions: () => request<{ sessions: ChatSession[] }>("/chat/sessions"),
+  createChatSession: (title?: string) =>
+    request<{ session: ChatSession }>("/chat/sessions", {
+      method: "POST",
+      body: JSON.stringify(title ? { title } : {}),
+    }),
+  updateChatSession: (sessionId: string, title: string) =>
+    request<{ session: ChatSession }>(`/chat/sessions/${sessionId}`, {
+      method: "PATCH",
+      body: JSON.stringify({ title }),
+    }),
+  deleteChatSession: (sessionId: string) => request<void>(`/chat/sessions/${sessionId}`, { method: "DELETE" }),
+  listChatMessages: (sessionId: string) =>
+    request<{ messages: ChatMessage[] }>(`/chat/sessions/${sessionId}/messages`),
+  sendChatMessage: async (sessionId: string, content: string, handlers: ChatStreamHandlers = {}) => {
+    const res = await fetch(`/api/chat/sessions/${sessionId}/messages`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ content }),
+    });
+
+    if (!res.ok && res.status !== 409) {
+      const body = await res.json().catch(() => ({}));
+      throw new Error(body.error ? JSON.stringify(body.error) : `Request failed: ${res.status}`);
+    }
+
+    const reader = res.body?.getReader();
+    if (!reader) throw new Error("No response body");
+
+    const decoder = new TextDecoder();
+    let buffer = "";
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const chunks = buffer.split("\n\n");
+      buffer = chunks.pop() ?? "";
+
+      for (const chunk of chunks) {
+        const lines = chunk.split("\n");
+        let eventName = "message";
+        let dataLine = "";
+        for (const line of lines) {
+          if (line.startsWith("event:")) eventName = line.slice(6).trim();
+          if (line.startsWith("data:")) dataLine = line.slice(5).trim();
+        }
+        if (!dataLine) continue;
+        const data = JSON.parse(dataLine) as Record<string, unknown>;
+        if (eventName === "text-delta") handlers.onTextDelta?.(String(data.delta ?? ""));
+        if (eventName === "message-done") handlers.onMessage?.(data.message as ChatMessage);
+        if (eventName === "tool-call") {
+          handlers.onToolCall?.(
+            String(data.toolName ?? ""),
+            (data.toolArgs as Record<string, unknown>) ?? {}
+          );
+        }
+        if (eventName === "session-update") handlers.onSessionUpdate?.(data.session as ChatSession);
+        if (eventName === "error") handlers.onError?.(String(data.error ?? "chat error"));
+      }
+    }
+  },
 };

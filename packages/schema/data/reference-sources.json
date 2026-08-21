@@ -5,7 +5,8 @@
     "url": "https://productinfo.shimano.com/",
     "category": "manufacturer_specs",
     "domains": ["productinfo.shimano.com"],
-    "jobKinds": ["ExtractSpecs"]
+    "jobKinds": ["ExtractSpecs"],
+    "searchUrlTemplate": "https://productinfo.shimano.com/search?q={query}"
   },
   {
     "id": "sram-service",
@@ -13,7 +14,8 @@
     "url": "https://www.sram.com/en/service",
     "category": "manufacturer_specs",
     "domains": ["sram.com"],
-    "jobKinds": ["ExtractSpecs"]
+    "jobKinds": ["ExtractSpecs"],
+    "searchUrlTemplate": "https://www.sram.com/en/search?q={query}"
   },
   {
     "id": "rockshox-trailhead",
@@ -21,7 +23,8 @@
     "url": "https://trailhead.rockshox.com/",
     "category": "manufacturer_specs",
     "domains": ["trailhead.rockshox.com"],
-    "jobKinds": ["ExtractSpecs"]
+    "jobKinds": ["ExtractSpecs"],
+    "searchUrlTemplate": "https://trailhead.rockshox.com/search?q={query}"
   },
   {
     "id": "fox-bike-tech-help-center",
@@ -29,7 +32,8 @@
     "url": "https://tech.ridefox.com/bike/",
     "category": "manufacturer_specs",
     "domains": ["tech.ridefox.com"],
-    "jobKinds": ["ExtractSpecs"]
+    "jobKinds": ["ExtractSpecs"],
+    "searchUrlTemplate": "https://tech.ridefox.com/bike/search?q={query}"
   },
   {
     "id": "park-tool-repair-help",
@@ -37,7 +41,8 @@
     "url": "https://www.parktool.com/en-us/blog/repair-help",
     "category": "technical_reference",
     "domains": ["parktool.com"],
-    "jobKinds": ["ExtractSpecs"]
+    "jobKinds": ["ExtractSpecs"],
+    "searchUrlTemplate": "https://www.parktool.com/en-us/search?q={query}"
   },
   {
     "id": "specshift",
@@ -45,7 +50,8 @@
     "url": "https://www.specshift.bike/",
     "category": "component_database",
     "domains": ["specshift.bike"],
-    "jobKinds": ["ExtractSpecs"]
+    "jobKinds": ["ExtractSpecs"],
+    "searchUrlTemplate": "https://www.specshift.bike/search?q={query}"
   },
   {
     "id": "99-spokes",
@@ -53,7 +59,8 @@
     "url": "https://99spokes.com/",
     "category": "bike_specs",
     "domains": ["99spokes.com"],
-    "jobKinds": ["ExtractSpecs"]
+    "jobKinds": ["ExtractSpecs"],
+    "searchUrlTemplate": "https://99spokes.com/search?q={query}"
   },
   {
     "id": "bicycle-rolling-resistance",
@@ -61,7 +68,8 @@
     "url": "https://www.bicyclerollingresistance.com/mtb-reviews",
     "category": "tire_testing",
     "domains": ["bicyclerollingresistance.com"],
-    "jobKinds": ["ExtractSpecs"]
+    "jobKinds": ["ExtractSpecs"],
+    "searchUrlTemplate": "https://www.bicyclerollingresistance.com/search?q={query}"
   },
   {
     "id": "pinkbike",
@@ -77,7 +85,8 @@
     "url": "https://www.vitalmtb.com/",
     "category": "news_reviews",
     "domains": ["vitalmtb.com"],
-    "jobKinds": ["DiscoverListings"]
+    "jobKinds": ["DiscoverListings"],
+    "searchUrlTemplate": "https://www.vitalmtb.com/search?q={query}"
   },
   {
     "id": "bikeradar",
@@ -85,7 +94,8 @@
     "url": "https://www.bikeradar.com/",
     "category": "news_reviews",
     "domains": ["bikeradar.com"],
-    "jobKinds": ["DiscoverListings"]
+    "jobKinds": ["DiscoverListings"],
+    "searchUrlTemplate": "https://www.bikeradar.com/search?q={query}"
   },
   {
     "id": "singletracks",
@@ -93,7 +103,8 @@
     "url": "https://www.singletracks.com/",
     "category": "news_reviews",
     "domains": ["singletracks.com"],
-    "jobKinds": ["DiscoverListings"]
+    "jobKinds": ["DiscoverListings"],
+    "searchUrlTemplate": "https://www.singletracks.com/?s={query}"
   },
   {
     "id": "the-loam-wolf",
@@ -101,7 +112,8 @@
     "url": "https://theloamwolf.com/",
     "category": "product_testing",
     "domains": ["theloamwolf.com"],
-    "jobKinds": ["DiscoverListings"]
+    "jobKinds": ["DiscoverListings"],
+    "searchUrlTemplate": "https://theloamwolf.com/?s={query}"
   },
   {
     "id": "blister",
@@ -109,7 +121,8 @@
     "url": "https://blisterreview.com/",
     "category": "product_testing",
     "domains": ["blisterreview.com"],
-    "jobKinds": ["DiscoverListings"]
+    "jobKinds": ["DiscoverListings"],
+    "searchUrlTemplate": "https://blisterreview.com/?s={query}"
   },
   {
     "id": "nsmb",
@@ -117,7 +130,8 @@
     "url": "https://nsmb.com/",
     "category": "product_testing",
     "domains": ["nsmb.com"],
-    "jobKinds": ["DiscoverListings"]
+    "jobKinds": ["DiscoverListings"],
+    "searchUrlTemplate": "https://nsmb.com/?s={query}"
   },
   {
     "id": "jenson-usa",

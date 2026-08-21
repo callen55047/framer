@@ -35,15 +35,19 @@ function formatTooltipLabel(timestamp: number): string {
 export function PriceHistoryChart({
   pricePoints,
   watchCreatedAt,
+  compact = false,
 }: {
   pricePoints: PricePoint[];
   watchCreatedAt: string;
+  compact?: boolean;
 }) {
   const gradientId = useId().replace(/:/g, "");
 
   if (pricePoints.length === 0) {
     return (
-      <p className="py-6 text-center text-sm text-neutral-500">No price history yet.</p>
+      <p className={`text-center text-sm text-neutral-500 ${compact ? "py-3" : "py-6"}`}>
+        No price history yet.
+      </p>
     );
   }
 
@@ -60,6 +64,46 @@ export function PriceHistoryChart({
 
   const refreshTicks = data.map((d) => d.timestamp);
   const crowdedTicks = refreshTicks.length > 6;
+
+  if (compact) {
+    return (
+      <div className="h-20 w-full">
+        <ResponsiveContainer width="100%" height="100%">
+          <AreaChart data={data} margin={{ top: 4, right: 8, bottom: 4, left: 0 }}>
+            <defs>
+              <linearGradient id={`${gradientId}-line`} x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stopColor="var(--color-brand-pink)" />
+                <stop offset="50%" stopColor="var(--color-brand-purple)" />
+                <stop offset="100%" stopColor="var(--color-brand-blue)" />
+              </linearGradient>
+              <linearGradient id={`${gradientId}-area`} x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="var(--color-brand-pink)" stopOpacity={0.3} />
+                <stop offset="50%" stopColor="var(--color-brand-purple)" stopOpacity={0.2} />
+                <stop offset="100%" stopColor="var(--color-brand-blue)" stopOpacity={0} />
+              </linearGradient>
+            </defs>
+            <XAxis dataKey="timestamp" type="number" scale="time" domain={[domainStart, domainEnd]} hide />
+            <YAxis hide domain={["auto", "auto"]} />
+            <Tooltip
+              contentStyle={{ background: "#171717", border: "1px solid #262626", borderRadius: 8, fontSize: 12 }}
+              labelStyle={{ color: "#a3a3a3" }}
+              labelFormatter={(label) => formatTooltipLabel(Number(label))}
+              formatter={(value: number) => [`$${value.toFixed(2)}`, "Price"]}
+            />
+            <Area
+              type="monotone"
+              dataKey="price"
+              stroke={`url(#${gradientId}-line)`}
+              strokeWidth={1.5}
+              fill={`url(#${gradientId}-area)`}
+              dot={false}
+              activeDot={{ r: 3, fill: "var(--color-brand-blue)" }}
+            />
+          </AreaChart>
+        </ResponsiveContainer>
+      </div>
+    );
+  }
 
   return (
     <div className="h-56 w-full">

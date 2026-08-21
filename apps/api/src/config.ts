@@ -44,4 +44,5 @@ export const config = {
     inferencePoolDepth: Number(env("INFERENCE_POOL_DEPTH", "1")),
   },
   sweepEnabled: env("FRAMER_SWEEP_ENABLED", "true") === "true",
+  chatSummaryIdleMinutes: Number(env("CHAT_SUMMARY_IDLE_MINUTES", "5")),
 };

@@ -1,4 +1,4 @@
-import { Bike, Eye, Home, ListChecks, User } from "lucide-react";
+import { Bike, Eye, Home, ListChecks, MessageCircle, User } from "lucide-react";
 import { NavLink } from "react-router-dom";
 
 const NAV_ITEMS = [
@@ -6,6 +6,7 @@ const NAV_ITEMS = [
   { to: "/watchlist", icon: Eye, label: "Watchlist" },
   { to: "/garage", icon: Bike, label: "Garage" },
   { to: "/tasks", icon: ListChecks, label: "Tasks" },
+  { to: "/assistant", icon: MessageCircle, label: "Assistant" },
   { to: "/profile", icon: User, label: "Profile" },
 ];
 

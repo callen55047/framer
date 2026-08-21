@@ -9,6 +9,8 @@ import { watchesRouter } from "./routes/watches.js";
 import { tasksRouter } from "./routes/tasks.js";
 import { runnerListingsRouter } from "./routes/runnerListings.js";
 import { runnerWatchesRouter } from "./routes/runnerWatches.js";
+import { chatRouter } from "./routes/chat.js";
+import { runnerChatRouter } from "./routes/runnerChat.js";
 
 export function createApp(): express.Express {
   const app = express();
@@ -23,6 +25,8 @@ export function createApp(): express.Express {
   app.use("/api/tasks", tasksRouter);
   app.use("/api/runner/listings", runnerListingsRouter);
   app.use("/api/runner/watches", runnerWatchesRouter);
+  app.use("/api/chat", chatRouter);
+  app.use("/api/runner/chat", runnerChatRouter);
 
   const webDist = config.webDistPath;
   if (existsSync(webDist)) {

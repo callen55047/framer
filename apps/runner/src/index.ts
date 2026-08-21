@@ -13,7 +13,7 @@ configureJobApi(httpJobApi);
  * Runner actually implements are requested, so an unimplemented DiscoverListings
  * row never gets claimed and stranded.
  */
-const IMPLEMENTED_KINDS: JobKind[] = ["RefreshListing"];
+const IMPLEMENTED_KINDS: JobKind[] = ["RefreshListing", "SummarizeChatSession"];
 
 const args = process.argv.slice(2);
 const runOnce = args.includes("--once");

@@ -34,7 +34,8 @@ const CLAIMABLE_WHERE = `
         or exists (
           select 1 from jobs pred
           where pred.id = j.depends_on_job_id and pred.status = 'succeeded'
-        )))
+        ))
+      and (j.not_before is null or j.not_before <= datetime('now')))
     or (j.status = 'leased' and j.lease_expires_at < datetime('now'))
   )
 `;

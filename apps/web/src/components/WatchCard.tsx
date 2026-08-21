@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ChevronDown, ChevronUp, Pencil, RefreshCw, Trash2 } from "lucide-react";
 import { api, type ListingVariant, type Watch } from "../lib/api.js";
 import { buildVariantTable, type VariantTableColumn } from "../lib/variantTable.js";
@@ -42,31 +42,42 @@ export function WatchCard({
   const [variants, setVariants] = useState<ListingVariant[] | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [removing, setRemoving] = useState(false);
-  const [loadingDetails, setLoadingDetails] = useState(false);
+  const [loadingChart, setLoadingChart] = useState(false);
+  const [loadingVariants, setLoadingVariants] = useState(false);
   const [pinningVariantId, setPinningVariantId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleDraft, setTitleDraft] = useState(watch.displayTitle ?? "");
   const [savingTitle, setSavingTitle] = useState(false);
 
-  async function loadExpandedDetails() {
-    setLoadingDetails(true);
+  async function loadPricePoints() {
+    setLoadingChart(true);
     try {
-      const [{ pricePoints: points }, { variants: listingVariants }] = await Promise.all([
-        api.listWatchPricePoints(watch.id),
-        api.listWatchVariants(watch.id),
-      ]);
+      const { pricePoints: points } = await api.listWatchPricePoints(watch.id);
       setPricePoints(points);
-      setVariants(listingVariants);
     } finally {
-      setLoadingDetails(false);
+      setLoadingChart(false);
     }
   }
+
+  async function loadVariants() {
+    setLoadingVariants(true);
+    try {
+      const { variants: listingVariants } = await api.listWatchVariants(watch.id);
+      setVariants(listingVariants);
+    } finally {
+      setLoadingVariants(false);
+    }
+  }
+
+  useEffect(() => {
+    void loadPricePoints();
+  }, [watch.id]);
 
   async function toggleExpanded() {
     const next = !expanded;
     setExpanded(next);
-    if (next && !pricePoints) {
-      await loadExpandedDetails();
+    if (next && !variants) {
+      await loadVariants();
     }
   }
 
@@ -75,7 +86,8 @@ export function WatchCard({
     try {
       await api.refreshWatch(watch.id);
       onRefreshed();
-      if (expanded) await loadExpandedDetails();
+      await loadPricePoints();
+      if (expanded) await loadVariants();
     } finally {
       setRefreshing(false);
     }
@@ -115,7 +127,7 @@ export function WatchCard({
         listingVariantId: variantId,
       });
       onRefreshed();
-      if (expanded) await loadExpandedDetails();
+      if (expanded) await loadVariants();
     } finally {
       setPinningVariantId(null);
     }
@@ -126,7 +138,7 @@ export function WatchCard({
     try {
       await api.updateWatchVariant(watch.id, { variantSelection: "all" });
       onRefreshed();
-      if (expanded) await loadExpandedDetails();
+      if (expanded) await loadVariants();
     } finally {
       setPinningVariantId(null);
     }
@@ -319,9 +331,21 @@ export function WatchCard({
         </div>
       </div>
 
+      <div className="border-t border-neutral-800 px-4 py-3">
+        {loadingChart ? (
+          <p className="py-3 text-center text-xs text-neutral-500">Loading chart...</p>
+        ) : (
+          <PriceHistoryChart
+            compact
+            pricePoints={pricePoints ?? []}
+            watchCreatedAt={watch.createdAt}
+          />
+        )}
+      </div>
+
       {expanded && (
         <div className="border-t border-neutral-800 px-4 pb-4">
-          {loadingDetails ? (
+          {loadingVariants ? (
             <p className="py-6 text-center text-sm text-neutral-500">Loading details...</p>
           ) : (
             <>
@@ -432,7 +456,6 @@ export function WatchCard({
                   </div>
                 </div>
               )}
-              <PriceHistoryChart pricePoints={pricePoints ?? []} watchCreatedAt={watch.createdAt} />
             </>
           )}
           <a

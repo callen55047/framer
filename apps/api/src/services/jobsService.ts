@@ -78,10 +78,8 @@ export async function claimJob(
   return withTransaction(async (client) => {
     let claimed = await claimNextJob(client, agentId, kinds, leaseSeconds);
     if (!claimed) {
-      const sweptId = await trySweep(client);
-      if (sweptId) {
-        claimed = await claimNextJob(client, agentId, kinds, leaseSeconds);
-      }
+      await trySweep(client);
+      claimed = await claimNextJob(client, agentId, kinds, leaseSeconds);
     }
     return claimed;
   });

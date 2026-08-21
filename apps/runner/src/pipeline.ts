@@ -7,6 +7,7 @@ import { extractStage } from "./stages/extractStage.js";
 import { resolveStage } from "./stages/resolveStage.js";
 import { persistStage } from "./stages/persistStage.js";
 import { autoTitleStage } from "./stages/autoTitleStage.js";
+import { runSummarizeChatSession } from "./stages/summarizeChatSessionStage.js";
 
 function domainFromUrl(url: string): string {
   return new URL(url).hostname.replace(/^www\./, "");
@@ -98,6 +99,9 @@ export async function runJob(job: JobRecord): Promise<void> {
         break;
       case "RefreshListing":
         await runRefreshListing(job);
+        break;
+      case "SummarizeChatSession":
+        await runSummarizeChatSession(job);
         break;
       default:
         throw new Error(`job kind "${job.kind}" has no Runner implementation yet`);

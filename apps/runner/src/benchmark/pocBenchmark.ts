@@ -264,6 +264,15 @@ export function createMockProvider(fixtures: PocFixture[]): ReturnType<typeof cr
     async generateWatchTitle(input) {
       return `${input.domain} — ${input.listingTitle}`.slice(0, 120);
     },
+    async generateSessionTitle(userMessage: string) {
+      return userMessage.slice(0, 60);
+    },
+    async summarizeChatSession(messages) {
+      return messages.map((message) => message.content).join(" ").slice(0, 200);
+    },
+    async *chat() {
+      yield { type: "done" as const };
+    },
   };
 }
 

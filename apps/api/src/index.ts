@@ -2,6 +2,7 @@ import { existsSync } from "node:fs";
 import { config } from "./config.js";
 import { createApp } from "./app.js";
 import { runMigrations } from "./db/migrate.js";
+import { reconcileSessionSummaries } from "./services/sessionSummarySchedule.js";
 import { startIntegratedRunner } from "./runner/startRunner.js";
 
 const app = createApp();
@@ -12,6 +13,10 @@ if (!existsSync(webDist)) {
 
 async function main() {
   await runMigrations();
+  const scheduled = await reconcileSessionSummaries();
+  if (scheduled > 0) {
+    console.log(`[chat] scheduled ${scheduled} session summar${scheduled === 1 ? "y" : "ies"} at startup`);
+  }
   startIntegratedRunner();
   app.listen(config.port, () => {
     console.log(`framer listening on http://localhost:${config.port}`);
