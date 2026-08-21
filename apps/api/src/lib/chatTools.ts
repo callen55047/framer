@@ -1,23 +1,33 @@
 import {
-  ASSISTANT_REFERENCE_CATEGORIES,
+  BUILD_SLOT_TO_CATEGORY,
+  BuildSlotSchema,
   LOCAL_OWNER_ID,
   ReferenceSourceCategorySchema,
+  SPEC_FIELD_LABELS,
   type ProductCategory,
+  type Spec,
 } from "@framer/schema";
 import type { ChatTool } from "@framer/runner/inference/types.js";
+import {
+  fetchCatalogReferencePage,
+  searchReferenceCategory,
+} from "@framer/runner/lib/referenceSearch.js";
 import { dbClient } from "../db/client.js";
 import { pool } from "../db/pool.js";
+import { createTaskWithLinearJobs } from "./createTaskChain.js";
 import {
   checkCompatibility,
+  findCompatibleProducts,
   parseProductSpecs,
   type CompatibilityProduct,
 } from "./compatibilityRules.js";
 import { mapListing, mapProduct, mapTask, mapWatch } from "./mappers.js";
-import { lookupReferencePage } from "./referenceLookup.js";
 import { computeWatchVariantSummary } from "../services/variantsService.js";
 
 const REFERENCE_CATEGORY_ENUM = ReferenceSourceCategorySchema.options.filter((category) =>
-  (ASSISTANT_REFERENCE_CATEGORIES as readonly string[]).includes(category)
+  (["manufacturer_specs", "technical_reference", "component_database", "bike_specs", "tire_testing", "news_reviews", "product_testing"] as readonly string[]).includes(
+    category
+  )
 );
 
 export const CHAT_TOOLS: ChatTool[] = [
@@ -67,9 +77,9 @@ export const CHAT_TOOLS: ChatTool[] = [
     },
   },
   {
-    name: "lookupReference",
+    name: "searchReference",
     description:
-      "Fetch MTB reference content from saved sites (manufacturer specs, compatibility databases, reviews). Returns page excerpt — cite the source in your answer.",
+      "Search registered MTB reference sites for a topic. Returns ranked page links — follow up with fetchReferencePage on the best URLs.",
     parameters: {
       type: "object",
       properties: {
@@ -78,16 +88,34 @@ export const CHAT_TOOLS: ChatTool[] = [
           enum: REFERENCE_CATEGORY_ENUM,
           description: "Reference source category to search",
         },
-        query: { type: "string", description: "Search query (product name, compatibility topic, etc.)" },
+        query: { type: "string", description: "Search query (bike name, component, compatibility topic)" },
+        limit: { type: "integer", minimum: 1, maximum: 10, description: "Max result links (default 5)" },
       },
       required: ["category", "query"],
       additionalProperties: false,
     },
   },
   {
+    name: "fetchReferencePage",
+    description:
+      "Fetch one allowlisted reference page by URL and return structure-preserving text (tables kept). Cite the source in your answer.",
+    parameters: {
+      type: "object",
+      properties: {
+        url: { type: "string", description: "Full URL from searchReference results" },
+        section: {
+          type: "string",
+          description: "Optional section keyword to focus excerpt (e.g. geometry, compatibility)",
+        },
+      },
+      required: ["url"],
+      additionalProperties: false,
+    },
+  },
+  {
     name: "checkCompatibility",
     description:
-      "Evaluate Compatibility Rules between two Products using grounded Specs in the database. Returns deterministic pass/fail — not a model opinion.",
+      "Evaluate Compatibility Rules between two Products using grounded Specs in the database. Returns deterministic pass/fail/unknown — not a model opinion.",
     parameters: {
       type: "object",
       properties: {
@@ -98,6 +126,46 @@ export const CHAT_TOOLS: ChatTool[] = [
         productBBrand: { type: "string", description: "Brand to search if productBId omitted" },
         productBModel: { type: "string", description: "Model to search if productBId omitted" },
       },
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "findCompatibleProducts",
+    description:
+      "Find catalog products compatible with a bike/frame product for a build slot (e.g. cockpit for stems). Uses grounded Specs — never asks the user for UUIDs.",
+    parameters: {
+      type: "object",
+      properties: {
+        forProductId: { type: "string", description: "Product UUID of the bike or frame" },
+        forBrand: { type: "string", description: "Brand if forProductId omitted" },
+        forModel: { type: "string", description: "Model if forProductId omitted" },
+        slot: {
+          type: "string",
+          enum: ["frame", "fork", "wheelset", "drivetrain", "brakes", "cockpit", "tires"],
+          description: "Build slot to find parts for",
+        },
+        limit: { type: "integer", minimum: 1, maximum: 20, description: "Max matches (default 10)" },
+      },
+      required: ["slot"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "enqueueResearch",
+    description:
+      "Enqueue a background ResearchQuestion job when in-chat reference search cannot answer. Creates a Task the user can track.",
+    parameters: {
+      type: "object",
+      properties: {
+        question: { type: "string", description: "The user's research question verbatim" },
+        targetProductId: { type: "string", description: "Optional product to attach extracted Specs to" },
+        categories: {
+          type: "array",
+          items: { type: "string", enum: REFERENCE_CATEGORY_ENUM },
+          description: "Optional reference categories to search",
+        },
+      },
+      required: ["question"],
       additionalProperties: false,
     },
   },
@@ -179,10 +247,16 @@ export async function executeChatTool(
       return searchProductsTool(args);
     case "getListing":
       return getListingTool(args);
-    case "lookupReference":
-      return lookupReferenceTool(args);
+    case "searchReference":
+      return searchReferenceTool(args);
+    case "fetchReferencePage":
+      return fetchReferencePageTool(args);
     case "checkCompatibility":
       return checkCompatibilityTool(args);
+    case "findCompatibleProducts":
+      return findCompatibleProductsTool(args);
+    case "enqueueResearch":
+      return enqueueResearchTool(args, context);
     case "listSessionSummaries":
       return listSessionSummariesTool(args, context);
     case "getSessionSummary":
@@ -310,10 +384,18 @@ async function getListingTool(args: Record<string, unknown>) {
   return { listing: mapListing(listing), product };
 }
 
-async function lookupReferenceTool(args: Record<string, unknown>) {
+async function searchReferenceTool(args: Record<string, unknown>) {
   const category = String(args.category ?? "");
   const query = String(args.query ?? "");
-  return lookupReferencePage(category, query);
+  const limit = Math.min(Math.max(Number(args.limit) || 5, 1), 10);
+  return searchReferenceCategory(category, query, limit);
+}
+
+async function fetchReferencePageTool(args: Record<string, unknown>) {
+  const url = String(args.url ?? "").trim();
+  if (!url) throw new Error("url is required");
+  const section = typeof args.section === "string" ? args.section : undefined;
+  return fetchCatalogReferencePage(url, { section });
 }
 
 async function resolveCompatibilityProduct(args: {
@@ -337,19 +419,20 @@ async function resolveCompatibilityProduct(args: {
 
   const brand = args.brand?.trim();
   const model = args.model?.trim();
-  if (!brand || !model) {
+  if (!brand && !model) {
     throw new Error(`${args.label}: provide productId or brand+model`);
   }
 
   const { rows } = await pool.query(
     `select * from products
-     where lower(brand) = lower($1) and lower(model) = lower($2)
+     where ($1::text is null or lower(brand) like lower($1))
+       and ($2::text is null or lower(model) like lower($2))
      order by updated_at desc
      limit 1`,
-    [brand, model]
+    [brand ? `%${brand}%` : null, model ? `%${model}%` : null]
   );
   const row = rows[0];
-  if (!row) throw new Error(`${args.label}: product not found for ${brand} ${model}`);
+  if (!row) throw new Error(`${args.label}: product not found for ${brand ?? ""} ${model ?? ""}`.trim());
   return {
     id: row.id as string,
     brand: row.brand as string,
@@ -374,6 +457,67 @@ async function checkCompatibilityTool(args: Record<string, unknown>) {
   });
 
   return checkCompatibility(productA, productB);
+}
+
+async function findCompatibleProductsTool(args: Record<string, unknown>) {
+  const slotParsed = BuildSlotSchema.safeParse(args.slot);
+  if (!slotParsed.success) throw new Error("slot is required");
+
+  const forProduct = await resolveCompatibilityProduct({
+    productId: typeof args.forProductId === "string" ? args.forProductId : undefined,
+    brand: typeof args.forBrand === "string" ? args.forBrand : undefined,
+    model: typeof args.forModel === "string" ? args.forModel : undefined,
+    label: "forProduct",
+  });
+
+  const limit = Math.min(Math.max(Number(args.limit) || 10, 1), 20);
+  const targetCategory = BUILD_SLOT_TO_CATEGORY[slotParsed.data] as ProductCategory;
+
+  const { rows } = await pool.query(
+    `select * from products where category = $1 order by updated_at desc limit 100`,
+    [targetCategory]
+  );
+
+  const candidates = rows.map((row) => ({
+    id: row.id as string,
+    brand: row.brand as string,
+    model: row.model as string,
+    category: row.category as ProductCategory,
+    specs: parseProductSpecs(row.specs),
+  }));
+
+  return findCompatibleProducts(forProduct, candidates, { limit, slot: slotParsed.data });
+}
+
+async function enqueueResearchTool(args: Record<string, unknown>, context: ChatToolContext) {
+  const question = String(args.question ?? "").trim();
+  if (!question) throw new Error("question is required");
+
+  const input: Record<string, unknown> = {
+    question,
+    sessionId: context.sessionId,
+  };
+  if (typeof args.targetProductId === "string") {
+    input.targetProductId = args.targetProductId;
+  }
+  if (Array.isArray(args.categories)) {
+    input.categories = args.categories.filter((value) => typeof value === "string");
+  }
+
+  const label = question.length > 80 ? `${question.slice(0, 77)}…` : question;
+  const { task, jobs } = await createTaskWithLinearJobs(dbClient, {
+    ownerId: LOCAL_OWNER_ID,
+    kind: "ResearchQuestion",
+    label,
+    origin: "user",
+    jobs: [{ kind: "ResearchQuestion", input }],
+  });
+
+  return {
+    task: mapTask(task),
+    jobId: jobs[0]?.id ?? null,
+    message: "Research queued — check the Tasks tab for progress.",
+  };
 }
 
 async function listSessionSummariesTool(args: Record<string, unknown>, context: ChatToolContext) {
@@ -419,3 +563,5 @@ async function getSessionSummaryTool(args: Record<string, unknown>, context: Cha
     summaryUpdatedAt: row.summary_updated_at as string,
   };
 }
+
+export { SPEC_FIELD_LABELS };

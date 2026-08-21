@@ -10,8 +10,12 @@ const TOOL_ACTIVITY_LABELS: Record<string, string> = {
   listTasks: "Checking tasks…",
   searchProducts: "Searching products…",
   getListing: "Looking up listing…",
-  lookupReference: "Searching reference sites…",
+  searchReference: "Searching reference sites…",
+  fetchReferencePage: "Fetching reference page…",
   checkCompatibility: "Checking compatibility…",
+  findCompatibleProducts: "Finding compatible parts…",
+  enqueueResearch: "Queueing background research…",
+  listSessionSummaries: "Listing past sessions…",
   getSessionSummary: "Loading session summary…",
 };
 

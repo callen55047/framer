@@ -1,4 +1,4 @@
-import { LOCAL_OWNER_ID, ExtractedVariantSchema, VariantDiscoveryFilterSchema, type JobKind, type JobRecord } from "@framer/schema";
+import { LOCAL_OWNER_ID, ExtractedVariantSchema, VariantDiscoveryFilterSchema, type JobKind, type JobRecord, type Spec } from "@framer/schema";
 import type { JobApi } from "@framer/runner/lib/jobApi.js";
 import { withTransaction, pool } from "../db/pool.js";
 import { mapJob } from "../lib/mappers.js";
@@ -12,6 +12,7 @@ import {
   reportJobStage,
 } from "../services/jobsService.js";
 import { persistPricePoint, markListingInactive, recordScheduledFailure } from "../services/listingsService.js";
+import { mergeProductSpecs } from "../services/productsService.js";
 import { reconcileVariantSnapshot } from "../services/variantsService.js";
 
 export function createInternalJobApi(agentId: string, leaseSeconds: number): JobApi {
@@ -129,6 +130,10 @@ export function createInternalJobApi(agentId: string, leaseSeconds: number): Job
          where id = $1 and owner_id = $3 and title_source = 'auto' and display_title is null`,
         [watchId, displayTitle, LOCAL_OWNER_ID]
       );
+    },
+
+    async mergeProductSpecs(productId, specs) {
+      await mergeProductSpecs(productId, specs as Spec);
     },
   };
 }

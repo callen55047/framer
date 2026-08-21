@@ -24,6 +24,7 @@ describe("compatibilityRules", () => {
       specs: { wheelSizeInches: 29, steererStandard: "tapered" },
     });
     const result = checkCompatibility(frame, wheel);
+    expect(result.verdict).toBe("compatible");
     expect(result.compatible).toBe(true);
     expect(result.violations).toHaveLength(0);
   });
@@ -32,6 +33,7 @@ describe("compatibilityRules", () => {
     const a = product({ id: "a", specs: { wheelSizeInches: 29 } });
     const b = product({ id: "b", specs: { wheelSizeInches: 27.5 } });
     const result = checkCompatibility(a, b);
+    expect(result.verdict).toBe("incompatible");
     expect(result.compatible).toBe(false);
     expect(result.violations[0]?.rule).toBe("wheelSizeInches");
   });
@@ -48,15 +50,16 @@ describe("compatibilityRules", () => {
       specs: { maxForkTravelMm: 160 },
     });
     const result = checkCompatibility(frame, fork);
-    expect(result.compatible).toBe(false);
+    expect(result.verdict).toBe("incompatible");
     expect(result.violations[0]?.rule).toBe("maxForkTravelMm");
   });
 
-  it("reports missing specs instead of guessing", () => {
+  it("returns unknown when specs are missing instead of compatible", () => {
     const frame = product({ id: "frame-1", category: "frame", specs: { maxForkTravelMm: 150 } });
     const fork = product({ id: "fork-1", category: "fork", specs: {} });
     const result = checkCompatibility(frame, fork);
-    expect(result.compatible).toBe(true);
+    expect(result.verdict).toBe("unknown");
+    expect(result.compatible).toBe(false);
     expect(result.missingSpecs.length).toBeGreaterThan(0);
   });
 

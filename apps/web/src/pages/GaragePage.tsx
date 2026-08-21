@@ -5,7 +5,7 @@ import { EmptyState } from "../components/EmptyState.js";
 /**
  * Stub. The Garage renders parametric geometry derived from scraped Specs
  * (stack, reach, head angle, etc.) — not a 3D asset library. See
- * docs/adr/0002-parametric-garage-geometry.md. It needs the ExtractSpecs
+ * docs/ARCHITECTURE.md#garage-rendering. It needs the ExtractSpecs
  * job kind and a populated Spec bag before there's anything to render, so
  * it's sequenced after the Watchlist slice, not before.
  */

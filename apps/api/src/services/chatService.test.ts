@@ -25,6 +25,8 @@ function createMockProvider(
     generateSessionTitle: async (userMessage) => userMessage.slice(0, 30),
     summarizeChatSession: async (messages) =>
       messages.map((message) => message.content).join(" ").slice(0, 200) || "Empty session.",
+    extractProductSpecs: async () => ({}),
+    synthesizeResearchAnswer: async (_question, excerpts) => excerpts.slice(0, 200),
     async *chat() {
       for await (const event of handler()) {
         if (event.type === "text-delta") {

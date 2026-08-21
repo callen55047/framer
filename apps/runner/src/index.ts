@@ -9,11 +9,16 @@ configureJobApi(httpJobApi);
 /**
  * Long-lived poll loop, not cron — cron's minimum granularity is one
  * minute, and "spawn a thread per job" would just queue up behind a single
- * local model anyway. See CONTEXT.md#Runner and docs/adr. Only kinds this
+ * local model anyway. See CONTEXT.md#Runner and docs/ARCHITECTURE.md. Only kinds this
  * Runner actually implements are requested, so an unimplemented DiscoverListings
  * row never gets claimed and stranded.
  */
-const IMPLEMENTED_KINDS: JobKind[] = ["RefreshListing", "SummarizeChatSession"];
+const IMPLEMENTED_KINDS: JobKind[] = [
+  "RefreshListing",
+  "SummarizeChatSession",
+  "ExtractSpecs",
+  "ResearchQuestion",
+];
 
 const args = process.argv.slice(2);
 const runOnce = args.includes("--once");

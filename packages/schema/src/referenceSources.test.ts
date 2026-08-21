@@ -5,6 +5,7 @@ import {
   findReferenceSourceByDomain,
   findReferenceSourceByUrl,
   getReferenceSourcesForJobKind,
+  getSearchableSourcesForCategory,
   isRetailerReferenceSource,
   normalizeDomain,
   pickReferenceSourceForCategory,
@@ -12,7 +13,7 @@ import {
 
 describe("referenceSources", () => {
   it("loads all catalog entries", () => {
-    expect(REFERENCE_SOURCES).toHaveLength(20);
+    expect(REFERENCE_SOURCES).toHaveLength(22);
   });
 
   it("resolves www and apex domains to the same retailer source", () => {
@@ -49,11 +50,23 @@ describe("referenceSources", () => {
     expect(normalizeDomain("WWW.JensonUSA.com")).toBe("jensonusa.com");
   });
 
-  it("builds search URLs from templates", () => {
-    const source = pickReferenceSourceForCategory("component_database", "fox fork");
-    expect(source?.id).toBe("specshift");
-    expect(buildReferenceSearchUrl(source!, "fox fork")).toBe(
-      "https://www.specshift.bike/search?q=fox%20fork"
-    );
+  it("prefers geometry geeks for bike_specs search", () => {
+    const sources = getSearchableSourcesForCategory("bike_specs");
+    expect(sources[0]?.id).toBe("geometry-geeks");
+    expect(buildReferenceSearchUrl(sources[0]!, "altitude")).toContain("geometrygeeks.bike");
+  });
+
+  it("pickReferenceSourceForCategory returns first searchable source", () => {
+    const source = pickReferenceSourceForCategory("bike_specs", "altitude");
+    expect(source?.id).toBe("geometry-geeks");
+  });
+
+  it("requires probe query and link selector on server searchable sources", () => {
+    for (const source of REFERENCE_SOURCES) {
+      if (source.searchUrlTemplate && source.searchRendering === "server") {
+        expect(source.searchProbeQuery, source.id).toBeTruthy();
+        expect(source.resultLinkSelector, source.id).toBeTruthy();
+      }
+    }
   });
 });

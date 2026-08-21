@@ -8,6 +8,7 @@ export * from "./job.js";
 export * from "./artifact.js";
 export * from "./extraction.js";
 export * from "./grounding.js";
+export * from "./groundSpecs.js";
 export * from "./resolutionUtils.js";
 export * from "./referenceSources.js";
 export * from "./listingItem.js";

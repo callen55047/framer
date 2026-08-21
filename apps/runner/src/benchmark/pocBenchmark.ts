@@ -270,6 +270,12 @@ export function createMockProvider(fixtures: PocFixture[]): ReturnType<typeof cr
     async summarizeChatSession(messages) {
       return messages.map((message) => message.content).join(" ").slice(0, 200);
     },
+    async extractProductSpecs() {
+      return {};
+    },
+    async synthesizeResearchAnswer(_question, excerpts) {
+      return excerpts.slice(0, 200);
+    },
     async *chat() {
       yield { type: "done" as const };
     },

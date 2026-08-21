@@ -2,14 +2,11 @@ import {
   ASSISTANT_REFERENCE_CATEGORIES,
   ReferenceSourceCategorySchema,
   buildReferenceSearchUrl,
-  pickReferenceSourceForCategory,
+  getSearchableSourcesForCategory,
   type AssistantReferenceCategory,
 } from "@framer/schema";
-import { fetchReferencePageText } from "@framer/runner/lib/referencePageFetch.js";
 
-const MAX_EXCERPT_CHARS = 8000;
-
-export function routeReferenceLookup(category: string, query: string) {
+export function routeReferenceSearch(category: string, query: string) {
   const parsedCategory = ReferenceSourceCategorySchema.safeParse(category);
   if (!parsedCategory.success) {
     throw new Error(`Invalid category: ${category}`);
@@ -23,28 +20,18 @@ export function routeReferenceLookup(category: string, query: string) {
     throw new Error("query is required");
   }
 
-  const source = pickReferenceSourceForCategory(parsedCategory.data as AssistantReferenceCategory, trimmedQuery);
-  if (!source) {
-    throw new Error(`No reference source registered for category "${category}"`);
+  const sources = getSearchableSourcesForCategory(parsedCategory.data as AssistantReferenceCategory);
+  if (sources.length === 0) {
+    throw new Error(`No searchable reference sources registered for category "${category}"`);
   }
 
-  const url = buildReferenceSearchUrl(source, trimmedQuery);
-  return { source, url };
+  return { sources, query: trimmedQuery };
 }
 
-export async function lookupReferencePage(category: string, query: string) {
-  const { source, url } = routeReferenceLookup(category, query);
-  const fetched = await fetchReferencePageText(url);
-  const excerpt =
-    fetched.text.length > MAX_EXCERPT_CHARS
-      ? `${fetched.text.slice(0, MAX_EXCERPT_CHARS)}…`
-      : fetched.text;
-
-  return {
-    sourceId: source.id,
-    sourceName: source.name,
-    sourceCategory: source.category,
-    url: fetched.url,
-    excerpt,
-  };
+/** @deprecated Use searchReference tool instead. */
+export function routeReferenceLookup(category: string, query: string) {
+  const { sources, query: trimmedQuery } = routeReferenceSearch(category, query);
+  const source = sources[0]!;
+  const url = buildReferenceSearchUrl(source, trimmedQuery);
+  return { source, url };
 }

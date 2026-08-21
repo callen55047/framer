@@ -40,7 +40,7 @@ export const config = {
   /**
    * Two separate bounded pools, not one. Scraping is network-bound and its
    * real constraint is per-retailer politeness; inference is GPU/CPU-bound
-   * and effectively serial on a single local model. See docs/adr and
+   * and effectively serial on a single local model. See docs/ARCHITECTURE.md and
    * CONTEXT.md#Runner — this replaces the original "a thread per job" idea,
    * which would just queue up behind inference anyway while risking a ban from
    * the fetch side.

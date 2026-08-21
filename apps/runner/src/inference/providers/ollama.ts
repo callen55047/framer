@@ -2,6 +2,7 @@ import {
   ListingExtractionSchema,
   ChatSessionTitleSchema,
   ChatSessionSummarySchema,
+  SpecSchema,
   type ReferenceSource,
   type ListingItemKind,
   type ProductCategory,
@@ -21,6 +22,11 @@ import {
   getChatSessionSummaryJsonSchema,
 } from "../sessionSummarySchema.js";
 import {
+  buildResearchAnswerPromptPrefix,
+  buildSpecExtractionPromptPrefix,
+  getSpecExtractionJsonSchema,
+} from "../specExtractionSchema.js";
+import {
   parseNdjsonStream,
   parseToolCallArgs,
   toOllamaMessages,
@@ -33,6 +39,8 @@ const relevanceJsonSchema = getListingRelevanceJsonSchema();
 const watchTitleJsonSchema = getWatchTitleJsonSchema();
 const sessionTitleJsonSchema = getChatSessionTitleJsonSchema();
 const sessionSummaryJsonSchema = getChatSessionSummaryJsonSchema();
+const specExtractionJsonSchema = getSpecExtractionJsonSchema();
+const researchAnswerJsonSchema = { type: "object", properties: { answer: { type: "string" } }, required: ["answer"] };
 
 export function createOllamaProvider(config: InferenceConfig): InferenceProvider {
   const baseUrl = config.baseUrl.replace(/\/$/, "");
@@ -96,6 +104,21 @@ export function createOllamaProvider(config: InferenceConfig): InferenceProvider
       } catch {
         return deterministicSessionSummary(messages);
       }
+    },
+    async extractProductSpecs(pageText: string) {
+      const parsed = await generate(buildSpecExtractionPromptPrefix() + pageText, specExtractionJsonSchema);
+      return SpecSchema.parse(parsed);
+    },
+    async synthesizeResearchAnswer(question: string, excerpts: string) {
+      const parsed = await generate(
+        buildResearchAnswerPromptPrefix(question, excerpts),
+        researchAnswerJsonSchema
+      );
+      const answer = typeof parsed === "object" && parsed && "answer" in parsed ? String((parsed as { answer: unknown }).answer) : "";
+      if (!answer.trim()) {
+        return excerpts.slice(0, 2000) || "Insufficient reference material to answer.";
+      }
+      return answer.trim();
     },
     async *chat(messages: ChatMessage[], tools: ChatTool[]): AsyncIterable<ChatStreamEvent> {
       const res = await fetch(`${baseUrl}/api/chat`, {

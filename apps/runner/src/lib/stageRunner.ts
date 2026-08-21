@@ -21,7 +21,7 @@ function sleep(ms: number): Promise<void> {
  * Runs one Stage of a Job's pipeline with retry scoped to that Stage only —
  * a model-output failure never re-triggers a network fetch, and vice versa.
  * See CONTEXT.md#Stage. Retries happen in-process here; the API's
- * /jobs/:id/stages endpoint is reporting-only (see docs/adr).
+ * /jobs/:id/stages endpoint is reporting-only (see docs/ARCHITECTURE.md).
  */
 export async function runStage<T>(
   jobId: string,

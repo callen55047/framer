@@ -30,6 +30,9 @@ export const ASSISTANT_REFERENCE_CATEGORIES = [
 
 export type AssistantReferenceCategory = (typeof ASSISTANT_REFERENCE_CATEGORIES)[number];
 
+export const SearchRenderingSchema = z.enum(["server", "client", "blocked"]);
+export type SearchRendering = z.infer<typeof SearchRenderingSchema>;
+
 export const ReferenceSourceSchema = z.object({
   id: z.string().min(1),
   name: z.string().min(1),
@@ -39,6 +42,12 @@ export const ReferenceSourceSchema = z.object({
   jobKinds: z.array(JobKindSchema).min(1),
   /** Optional URL template for site search; `{query}` is replaced with encodeURIComponent(query). */
   searchUrlTemplate: z.string().url().optional(),
+  /** How the site's search page behaves when fetched without a browser. */
+  searchRendering: SearchRenderingSchema.default("server"),
+  /** CSS selector for result links on a search page (server-rendered sources only). */
+  resultLinkSelector: z.string().min(1).optional(),
+  /** Term used by scripts/probe-reference-sources.ts to validate search pages. */
+  searchProbeQuery: z.string().min(1).optional(),
 });
 export type ReferenceSource = z.infer<typeof ReferenceSourceSchema>;
 
@@ -95,22 +104,41 @@ export function getReferenceSourcesForCategory(category: ReferenceSourceCategory
   return REFERENCE_SOURCES.filter((source) => source.category === category);
 }
 
+function assistantCandidates(category: AssistantReferenceCategory): ReferenceSource[] {
+  return getReferenceSourcesForCategory(category).filter((source) => !isRetailerReferenceSource(source));
+}
+
+/** Ordered list of assistant-searchable sources for a category (server-rendered first). */
+export function getSearchableSourcesForCategory(
+  category: AssistantReferenceCategory,
+  options?: { includeClient?: boolean; includeBlocked?: boolean }
+): ReferenceSource[] {
+  const candidates = assistantCandidates(category);
+  const includeClient = options?.includeClient ?? false;
+  const includeBlocked = options?.includeBlocked ?? false;
+
+  return candidates
+    .filter((source) => source.searchUrlTemplate)
+    .filter((source) => {
+      if (source.searchRendering === "server") return true;
+      if (source.searchRendering === "client") return includeClient;
+      if (source.searchRendering === "blocked") return includeBlocked;
+      return false;
+    })
+    .sort((a, b) => {
+      const rank = (s: ReferenceSource) =>
+        s.searchRendering === "server" ? 0 : s.searchRendering === "client" ? 1 : 2;
+      return rank(a) - rank(b);
+    });
+}
+
+/** @deprecated Prefer getSearchableSourcesForCategory — returns first searchable source only. */
 export function pickReferenceSourceForCategory(
   category: AssistantReferenceCategory,
   query?: string
 ): ReferenceSource | undefined {
-  const candidates = getReferenceSourcesForCategory(category).filter(
-    (source) => !isRetailerReferenceSource(source)
-  );
-  if (candidates.length === 0) return undefined;
-
-  const trimmedQuery = query?.trim();
-  if (trimmedQuery) {
-    const withSearch = candidates.filter((source) => source.searchUrlTemplate);
-    if (withSearch.length > 0) return withSearch[0];
-  }
-
-  return candidates[0];
+  void query;
+  return getSearchableSourcesForCategory(category)[0];
 }
 
 export function buildReferenceSearchUrl(source: ReferenceSource, query: string): string {
@@ -137,9 +165,7 @@ export const MatchedReferenceSourceSchema = z.object({
 });
 export type MatchedReferenceSource = z.infer<typeof MatchedReferenceSourceSchema>;
 
-export function toMatchedReferenceSource(
-  source: ReferenceSource
-): MatchedReferenceSource {
+export function toMatchedReferenceSource(source: ReferenceSource): MatchedReferenceSource {
   return MatchedReferenceSourceSchema.parse({
     id: source.id,
     name: source.name,

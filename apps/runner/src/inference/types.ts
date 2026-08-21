@@ -4,6 +4,7 @@ import type {
   ListingRelevance,
   ProductCategory,
   ReferenceSource,
+  Spec,
 } from "@framer/schema";
 
 export const INFERENCE_PROVIDER_KINDS = ["ollama", "lmstudio"] as const;
@@ -53,5 +54,7 @@ export interface InferenceProvider {
     messages: { role: "user" | "assistant" | "tool"; content: string; toolName?: string | null }[],
     existingSummary?: string | null
   ): Promise<string>;
+  extractProductSpecs(pageText: string): Promise<Spec>;
+  synthesizeResearchAnswer(question: string, excerpts: string): Promise<string>;
   chat(messages: ChatMessage[], tools: ChatTool[]): AsyncIterable<ChatStreamEvent>;
 }

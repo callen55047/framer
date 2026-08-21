@@ -1,4 +1,4 @@
-import type { JobKind, JobRecord, StageName, StageStatus } from "@framer/schema";
+import type { JobKind, JobRecord, StageName, StageStatus, Spec } from "@framer/schema";
 
 export interface JobApi {
   claimJob(kinds?: JobKind[]): Promise<JobRecord | null>;
@@ -61,6 +61,7 @@ export interface JobApi {
   markListingUnsupported(listingId: string, reason: string): Promise<void>;
   recordScheduledListingFailure(listingId: string, httpStatus?: number): Promise<void>;
   setWatchDisplayTitle(watchId: string, displayTitle: string): Promise<void>;
+  mergeProductSpecs(productId: string, specs: Spec): Promise<void>;
   clearActiveLease(): void;
   getActiveLeaseToken(jobId: string): string | null;
 }
@@ -188,4 +189,8 @@ export async function recordScheduledListingFailureRemote(
 
 export async function setWatchDisplayTitleRemote(watchId: string, displayTitle: string): Promise<void> {
   return getJobApi().setWatchDisplayTitle(watchId, displayTitle);
+}
+
+export async function mergeProductSpecsRemote(productId: string, specs: Spec): Promise<void> {
+  return getJobApi().mergeProductSpecs(productId, specs);
 }

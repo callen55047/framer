@@ -4,6 +4,7 @@ import {
   ChatSessionSummarySchema,
   ListingRelevanceSchema,
   WatchTitleSchema,
+  SpecSchema,
   type ReferenceSource,
   type ListingItemKind,
   type ProductCategory,
@@ -22,6 +23,11 @@ import {
   getChatSessionSummaryJsonSchema,
 } from "../sessionSummarySchema.js";
 import {
+  buildResearchAnswerPromptPrefix,
+  buildSpecExtractionPromptPrefix,
+  getSpecExtractionJsonSchema,
+} from "../specExtractionSchema.js";
+import {
   parseOpenAiSseStream,
   parseToolCallArgs,
   toOpenAiMessages,
@@ -34,6 +40,8 @@ const relevanceJsonSchema = getListingRelevanceJsonSchema();
 const watchTitleJsonSchema = getWatchTitleJsonSchema();
 const sessionTitleJsonSchema = getChatSessionTitleJsonSchema();
 const sessionSummaryJsonSchema = getChatSessionSummaryJsonSchema();
+const specExtractionJsonSchema = getSpecExtractionJsonSchema();
+const researchAnswerJsonSchema = { type: "object", properties: { answer: { type: "string" } }, required: ["answer"] };
 
 export function createLmStudioProvider(config: InferenceConfig): InferenceProvider {
   const baseUrl = config.baseUrl.replace(/\/$/, "");
@@ -116,6 +124,26 @@ export function createLmStudioProvider(config: InferenceConfig): InferenceProvid
       } catch {
         return deterministicSessionSummary(messages);
       }
+    },
+    async extractProductSpecs(pageText: string) {
+      const parsed = await generate(
+        buildSpecExtractionPromptPrefix() + pageText,
+        specExtractionJsonSchema,
+        "spec_extraction"
+      );
+      return SpecSchema.parse(parsed);
+    },
+    async synthesizeResearchAnswer(question: string, excerpts: string) {
+      const parsed = await generate(
+        buildResearchAnswerPromptPrefix(question, excerpts),
+        researchAnswerJsonSchema,
+        "research_answer"
+      );
+      const answer = typeof parsed === "object" && parsed && "answer" in parsed ? String((parsed as { answer: unknown }).answer) : "";
+      if (!answer.trim()) {
+        return excerpts.slice(0, 2000) || "Insufficient reference material to answer.";
+      }
+      return answer.trim();
     },
     async *chat(messages: ChatMessage[], tools: ChatTool[]): AsyncIterable<ChatStreamEvent> {
       const res = await fetch(`${baseUrl}/chat/completions`, {

@@ -13,7 +13,7 @@
   "scripts": {
     "clean": "npm run clean --workspaces --if-present",
     "build": "npm run clean && npm run build -w @framer/schema && npm run build -w @framer/runner && npm run build -w @framer/web && npm run build -w @framer/api",
-    "dev": "concurrently -k -n schema,web,api -c yellow,blue,green \"npm run dev -w @framer/schema\" \"npm run dev -w @framer/web\" \"npm run dev -w @framer/api\"",
+    "dev": "npm run build && concurrently -k -n schema,web,api -c yellow,blue,green \"npm run dev -w @framer/schema\" \"npm run dev -w @framer/web\" \"npm run dev -w @framer/api\"",
     "start": "npm run build && npm run start -w @framer/api",
     "dev:api": "npm run dev --workspace=@framer/api",
     "dev:web": "npm run dev --workspace=@framer/web",
@@ -25,11 +25,14 @@
     "benchmark:save-baseline": "npm run benchmark:save-baseline --workspace=@framer/runner",
     "benchmark:compare": "npm run benchmark:compare --workspace=@framer/runner",
     "verify:poc": "npm run verify:poc --workspace=@framer/runner",
-    "test": "npm run test --workspaces --if-present",
+    "probe:sources": "tsx scripts/probe-reference-sources.ts",
+    "test": "npm run test --workspaces --if-present && npm run test:probe-catalog",
+    "test:probe-catalog": "npm run test -w @framer/schema -- src/referenceSources.test.ts",
     "typecheck": "npm run typecheck --workspaces --if-present"
   },
   "devDependencies": {
     "concurrently": "^9.1.2",
+    "tsx": "^4.19.2",
     "typescript": "^5.6.3"
   }
 }

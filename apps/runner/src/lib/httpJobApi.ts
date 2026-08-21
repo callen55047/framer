@@ -159,4 +159,11 @@ export const httpJobApi: JobApi = {
       body: JSON.stringify({ agentId: config.agentId, displayTitle }),
     });
   },
+
+  async mergeProductSpecs(productId, specs) {
+    await apiFetch(`/api/runner/products/${productId}/specs`, {
+      method: "POST",
+      body: JSON.stringify({ agentId: config.agentId, specs }),
+    });
+  },
 };

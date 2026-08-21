@@ -3,6 +3,7 @@ import { IdSchema } from "./ids.js";
 import { VariantDiscoveryFilterSchema, VariantSnapshotSchema } from "./variant.js";
 import { ListingItemKindSchema } from "./listingItem.js";
 import { ProductCategorySchema } from "./product.js";
+import { SpecSchema } from "./spec.js";
 
 /**
  * The closed set of Job kinds. Acceptance checking requires a fixed output
@@ -15,6 +16,7 @@ export const JobKindSchema = z.enum([
   "ExtractSpecs",
   "DiscoverListings",
   "SummarizeChatSession",
+  "ResearchQuestion",
 ]);
 export type JobKind = z.infer<typeof JobKindSchema>;
 
@@ -110,12 +112,55 @@ export const SummarizeChatSessionOutputSchema = z.object({
 });
 export type SummarizeChatSessionOutput = z.infer<typeof SummarizeChatSessionOutputSchema>;
 
+/** Extract structured Specs from a manufacturer or reference page into a Product. */
+export const ExtractSpecsInputSchema = z.object({
+  productId: IdSchema,
+  url: z.string().url(),
+  sourceId: z.string().optional(),
+});
+export type ExtractSpecsInput = z.infer<typeof ExtractSpecsInputSchema>;
+
+export const ExtractSpecsOutputSchema = z.object({
+  productId: IdSchema,
+  url: z.string().url(),
+  specs: SpecSchema,
+  extractedAt: z.string().datetime(),
+  groundedFields: z.array(z.string()),
+});
+export type ExtractSpecsOutput = z.infer<typeof ExtractSpecsOutputSchema>;
+
+/** Deep multi-source research for a user question; persists Specs when found. */
+export const ResearchQuestionInputSchema = z.object({
+  question: z.string().min(1),
+  targetProductId: IdSchema.optional(),
+  sessionId: IdSchema.optional(),
+  categories: z.array(z.string()).optional(),
+});
+export type ResearchQuestionInput = z.infer<typeof ResearchQuestionInputSchema>;
+
+export const ResearchSourceSchema = z.object({
+  url: z.string().url(),
+  sourceId: z.string(),
+  sourceName: z.string(),
+});
+export type ResearchSource = z.infer<typeof ResearchSourceSchema>;
+
+export const ResearchQuestionOutputSchema = z.object({
+  question: z.string(),
+  answer: z.string(),
+  sources: z.array(ResearchSourceSchema),
+  specsUpdated: z.boolean(),
+  researchedAt: z.string().datetime(),
+});
+export type ResearchQuestionOutput = z.infer<typeof ResearchQuestionOutputSchema>;
+
 export const JobInputSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("Acknowledge"), payload: AcknowledgeInputSchema }),
   z.object({ kind: z.literal("RefreshListing"), payload: RefreshListingInputSchema }),
-  z.object({ kind: z.literal("ExtractSpecs"), payload: z.record(z.unknown()) }),
+  z.object({ kind: z.literal("ExtractSpecs"), payload: ExtractSpecsInputSchema }),
   z.object({ kind: z.literal("DiscoverListings"), payload: z.record(z.unknown()) }),
   z.object({ kind: z.literal("SummarizeChatSession"), payload: SummarizeChatSessionInputSchema }),
+  z.object({ kind: z.literal("ResearchQuestion"), payload: ResearchQuestionInputSchema }),
 ]);
 export type JobInput = z.infer<typeof JobInputSchema>;
 
@@ -158,6 +203,9 @@ export function parseJobOutput(kind: JobKind, output: unknown): Record<string, u
     case "SummarizeChatSession":
       return SummarizeChatSessionOutputSchema.parse(output);
     case "ExtractSpecs":
+      return ExtractSpecsOutputSchema.parse(output);
+    case "ResearchQuestion":
+      return ResearchQuestionOutputSchema.parse(output);
     case "DiscoverListings":
       return z.record(z.unknown()).parse(output);
     default: {

@@ -12,6 +12,10 @@ import { z } from "zod";
 export const SpecSchema = z
   .object({
     steererStandard: z.string().optional(), // e.g. "tapered 1.5-1.125in"
+    steererDiameterMm: z.number().positive().optional(),
+    barClampDiameterMm: z.number().positive().optional(),
+    seatpostDiameterMm: z.number().positive().optional(),
+    bottomBracketStandard: z.string().optional(), // e.g. "BSA 73mm"
     axleStandard: z.string().optional(), // e.g. "15x110mm Boost"
     brakeMount: z.string().optional(), // e.g. "post mount 180mm"
     maxForkTravelMm: z.number().positive().optional(),
@@ -30,6 +34,10 @@ export type Spec = z.infer<typeof SpecSchema>;
 
 export const SPEC_FIELD_LABELS: Record<keyof Spec, string> = {
   steererStandard: "Steerer standard",
+  steererDiameterMm: "Steerer diameter (mm)",
+  barClampDiameterMm: "Bar clamp diameter (mm)",
+  seatpostDiameterMm: "Seatpost diameter (mm)",
+  bottomBracketStandard: "Bottom bracket standard",
   axleStandard: "Axle standard",
   brakeMount: "Brake mount",
   maxForkTravelMm: "Max fork travel (mm)",
@@ -41,4 +49,26 @@ export const SPEC_FIELD_LABELS: Record<keyof Spec, string> = {
   bbDropMm: "BB drop (mm)",
   wheelbaseMm: "Wheelbase (mm)",
   wheelSizeInches: "Wheel size (in)",
+};
+
+/** Slot names the assistant uses when searching for compatible parts. */
+export const BuildSlotSchema = z.enum([
+  "frame",
+  "fork",
+  "wheelset",
+  "drivetrain",
+  "brakes",
+  "cockpit",
+  "tires",
+]);
+export type BuildSlot = z.infer<typeof BuildSlotSchema>;
+
+export const BUILD_SLOT_TO_CATEGORY: Record<BuildSlot, string> = {
+  frame: "frame",
+  fork: "fork",
+  wheelset: "wheelset",
+  drivetrain: "drivetrain",
+  brakes: "brakes",
+  cockpit: "cockpit",
+  tires: "tires",
 };

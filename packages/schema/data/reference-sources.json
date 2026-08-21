@@ -1,12 +1,36 @@
 [
   {
+    "id": "geometry-geeks",
+    "name": "Geometry Geeks",
+    "url": "https://geometrygeeks.bike/",
+    "category": "bike_specs",
+    "domains": ["geometrygeeks.bike"],
+    "jobKinds": ["ExtractSpecs"],
+    "searchUrlTemplate": "https://geometrygeeks.bike/search/?q={query}",
+    "searchRendering": "server",
+    "resultLinkSelector": "a[href^=\"/bike/\"]",
+    "searchProbeQuery": "rocky mountain altitude"
+  },
+  {
+    "id": "rocky-mountain-bikes",
+    "name": "Rocky Mountain Bikes",
+    "url": "https://bikes.com/",
+    "category": "manufacturer_specs",
+    "domains": ["bikes.com"],
+    "jobKinds": ["ExtractSpecs"],
+    "searchUrlTemplate": "https://bikes.com/search?q={query}",
+    "searchRendering": "server",
+    "resultLinkSelector": "a[href*=\"/products/\"]",
+    "searchProbeQuery": "altitude"
+  },
+  {
     "id": "shimano-product-information",
     "name": "Shimano Product Information",
     "url": "https://productinfo.shimano.com/",
     "category": "manufacturer_specs",
     "domains": ["productinfo.shimano.com"],
     "jobKinds": ["ExtractSpecs"],
-    "searchUrlTemplate": "https://productinfo.shimano.com/search?q={query}"
+    "searchRendering": "client"
   },
   {
     "id": "sram-service",
@@ -15,7 +39,7 @@
     "category": "manufacturer_specs",
     "domains": ["sram.com"],
     "jobKinds": ["ExtractSpecs"],
-    "searchUrlTemplate": "https://www.sram.com/en/search?q={query}"
+    "searchRendering": "blocked"
   },
   {
     "id": "rockshox-trailhead",
@@ -24,7 +48,7 @@
     "category": "manufacturer_specs",
     "domains": ["trailhead.rockshox.com"],
     "jobKinds": ["ExtractSpecs"],
-    "searchUrlTemplate": "https://trailhead.rockshox.com/search?q={query}"
+    "searchRendering": "client"
   },
   {
     "id": "fox-bike-tech-help-center",
@@ -33,7 +57,10 @@
     "category": "manufacturer_specs",
     "domains": ["tech.ridefox.com"],
     "jobKinds": ["ExtractSpecs"],
-    "searchUrlTemplate": "https://tech.ridefox.com/bike/search?q={query}"
+    "searchUrlTemplate": "https://tech.ridefox.com/bike?s={query}",
+    "searchRendering": "server",
+    "resultLinkSelector": "a[href*=\"/bike/\"]",
+    "searchProbeQuery": "fork"
   },
   {
     "id": "park-tool-repair-help",
@@ -42,7 +69,10 @@
     "category": "technical_reference",
     "domains": ["parktool.com"],
     "jobKinds": ["ExtractSpecs"],
-    "searchUrlTemplate": "https://www.parktool.com/en-us/search?q={query}"
+    "searchUrlTemplate": "https://www.parktool.com/en-us/search?q={query}",
+    "searchRendering": "server",
+    "resultLinkSelector": "a[href*=\"/blog/\"]",
+    "searchProbeQuery": "stem"
   },
   {
     "id": "specshift",
@@ -51,7 +81,9 @@
     "category": "component_database",
     "domains": ["specshift.bike"],
     "jobKinds": ["ExtractSpecs"],
-    "searchUrlTemplate": "https://www.specshift.bike/search?q={query}"
+    "searchUrlTemplate": "https://www.specshift.bike/?s={query}",
+    "searchRendering": "client",
+    "searchProbeQuery": "stem"
   },
   {
     "id": "99-spokes",
@@ -60,7 +92,7 @@
     "category": "bike_specs",
     "domains": ["99spokes.com"],
     "jobKinds": ["ExtractSpecs"],
-    "searchUrlTemplate": "https://99spokes.com/search?q={query}"
+    "searchRendering": "client"
   },
   {
     "id": "bicycle-rolling-resistance",
@@ -69,7 +101,10 @@
     "category": "tire_testing",
     "domains": ["bicyclerollingresistance.com"],
     "jobKinds": ["ExtractSpecs"],
-    "searchUrlTemplate": "https://www.bicyclerollingresistance.com/search?q={query}"
+    "searchUrlTemplate": "https://www.bicyclerollingresistance.com/?s={query}",
+    "searchRendering": "server",
+    "resultLinkSelector": "h2.entry-title a, article h2 a, .post-title a",
+    "searchProbeQuery": "maxxis"
   },
   {
     "id": "pinkbike",
@@ -77,7 +112,8 @@
     "url": "https://www.pinkbike.com/",
     "category": "news_reviews",
     "domains": ["pinkbike.com"],
-    "jobKinds": ["RefreshListing", "DiscoverListings"]
+    "jobKinds": ["RefreshListing", "DiscoverListings"],
+    "searchRendering": "blocked"
   },
   {
     "id": "vital-mtb",
@@ -86,7 +122,9 @@
     "category": "news_reviews",
     "domains": ["vitalmtb.com"],
     "jobKinds": ["DiscoverListings"],
-    "searchUrlTemplate": "https://www.vitalmtb.com/search?q={query}"
+    "searchUrlTemplate": "https://www.vitalmtb.com/search?q={query}",
+    "searchRendering": "blocked",
+    "searchProbeQuery": "altitude"
   },
   {
     "id": "bikeradar",
@@ -95,7 +133,10 @@
     "category": "news_reviews",
     "domains": ["bikeradar.com"],
     "jobKinds": ["DiscoverListings"],
-    "searchUrlTemplate": "https://www.bikeradar.com/search?q={query}"
+    "searchUrlTemplate": "https://www.bikeradar.com/search?q={query}",
+    "searchRendering": "client",
+    "resultLinkSelector": "a[href*=\"/reviews/\"], a[href*=\"/news/\"]",
+    "searchProbeQuery": "altitude"
   },
   {
     "id": "singletracks",
@@ -104,7 +145,10 @@
     "category": "news_reviews",
     "domains": ["singletracks.com"],
     "jobKinds": ["DiscoverListings"],
-    "searchUrlTemplate": "https://www.singletracks.com/?s={query}"
+    "searchUrlTemplate": "https://www.singletracks.com/?s={query}",
+    "searchRendering": "server",
+    "resultLinkSelector": "h2.entry-title a, article h2 a",
+    "searchProbeQuery": "altitude"
   },
   {
     "id": "the-loam-wolf",
@@ -113,7 +157,10 @@
     "category": "product_testing",
     "domains": ["theloamwolf.com"],
     "jobKinds": ["DiscoverListings"],
-    "searchUrlTemplate": "https://theloamwolf.com/?s={query}"
+    "searchUrlTemplate": "https://theloamwolf.com/?s={query}",
+    "searchRendering": "server",
+    "resultLinkSelector": "h2.entry-title a, article h2 a",
+    "searchProbeQuery": "altitude"
   },
   {
     "id": "blister",
@@ -122,7 +169,10 @@
     "category": "product_testing",
     "domains": ["blisterreview.com"],
     "jobKinds": ["DiscoverListings"],
-    "searchUrlTemplate": "https://blisterreview.com/?s={query}"
+    "searchUrlTemplate": "https://blisterreview.com/?s={query}",
+    "searchRendering": "server",
+    "resultLinkSelector": "h2.entry-title a, article h2 a",
+    "searchProbeQuery": "altitude"
   },
   {
     "id": "nsmb",
@@ -131,7 +181,10 @@
     "category": "product_testing",
     "domains": ["nsmb.com"],
     "jobKinds": ["DiscoverListings"],
-    "searchUrlTemplate": "https://nsmb.com/?s={query}"
+    "searchUrlTemplate": "https://nsmb.com/?s={query}",
+    "searchRendering": "server",
+    "resultLinkSelector": "h2.entry-title a, article h2 a",
+    "searchProbeQuery": "altitude"
   },
   {
     "id": "jenson-usa",

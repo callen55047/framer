@@ -7,7 +7,13 @@ import { config } from "../config.js";
 import { createInternalJobApi } from "./internalJobApi.js";
 import { runSummarizeChatSessionJob } from "../services/chatSummarizeService.js";
 
-const IMPLEMENTED_KINDS: JobKind[] = ["Acknowledge", "RefreshListing", "SummarizeChatSession"];
+const IMPLEMENTED_KINDS: JobKind[] = [
+  "Acknowledge",
+  "RefreshListing",
+  "SummarizeChatSession",
+  "ExtractSpecs",
+  "ResearchQuestion",
+];
 
 function applyRunnerInferenceEnv(): void {
   process.env.INFERENCE_PROVIDER = config.runner.inferenceProvider;

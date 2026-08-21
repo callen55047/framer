@@ -1,12 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { routeReferenceLookup } from "./referenceLookup.js";
+import { routeReferenceLookup, routeReferenceSearch } from "./referenceLookup.js";
 
 describe("referenceLookup", () => {
-  it("routes component_database queries to Specshift search URL", () => {
-    const { source, url } = routeReferenceLookup("component_database", "shimano crank");
-    expect(source.id).toBe("specshift");
-    expect(url).toContain("specshift.bike");
-    expect(url).toContain(encodeURIComponent("shimano crank"));
+  it("routes bike_specs queries to geometry geeks search URL", () => {
+    const { sources, query } = routeReferenceSearch("bike_specs", "rocky mountain altitude");
+    expect(sources[0]?.id).toBe("geometry-geeks");
+    expect(query).toBe("rocky mountain altitude");
+    const { url } = routeReferenceLookup("bike_specs", "rocky mountain altitude");
+    expect(url).toContain("geometrygeeks.bike");
   });
 
   it("rejects retailer categories", () => {

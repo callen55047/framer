@@ -43,6 +43,10 @@
     "./lib/referencePageFetch.js": {
       "types": "./dist/lib/referencePageFetch.d.ts",
       "default": "./dist/lib/referencePageFetch.js"
+    },
+    "./lib/referenceSearch.js": {
+      "types": "./dist/lib/referenceSearch.d.ts",
+      "default": "./dist/lib/referenceSearch.js"
     }
   },
   "scripts": {

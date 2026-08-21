@@ -9,7 +9,7 @@ export interface ResolveResult {
 /**
  * Resolve Stage: Resolution itself is server-side (it needs to see the
  * whole Product catalog, which the Runner never touches directly — see
- * docs/adr/0001). This Stage just shapes the extracted fields into the
+ * docs/ARCHITECTURE.md). This Stage just shapes the extracted fields into the
  * comparison the API expects. Category defaults to "other": RefreshListing
  * doesn't currently extract a category, so newly created Products start
  * uncategorized until ExtractSpecs (or a manual edit) fills it in.
