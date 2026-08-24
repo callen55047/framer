@@ -10,6 +10,7 @@ const TOOL_LABELS: Record<string, string> = {
   lookupReference: "Looked up reference",
   checkCompatibility: "Checked compatibility",
   getSessionSummary: "Loaded session summary",
+  getHandbookEntry: "Loaded handbook entry",
 };
 
 function toolLabel(toolName: string | null): string {

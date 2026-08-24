@@ -162,6 +162,52 @@ export interface ChatStreamHandlers {
   onError?: (error: string) => void;
 }
 
+export type HandbookEntryKind = "measurement" | "standard" | "concept";
+export type HandbookEntryStatus = "compared" | "explained";
+
+export interface HandbookEntry {
+  slug: string;
+  kind: HandbookEntryKind;
+  label: string;
+  status: HandbookEntryStatus;
+  specKey?: string;
+  unit?: "deg" | "mm" | "in";
+  appliesTo?: string[];
+  typicalRange?: { min: number; max: number };
+  illustrationPath: string | null;
+  baseBikePath: string | null;
+  diagram: string | null;
+  annotation: string | null;
+  summary: string;
+  prose: string;
+  sources: HandbookSource[];
+}
+
+export interface HandbookSource {
+  id: string;
+  name: string;
+  url: string;
+  category: string;
+  categoryLabel: string;
+  jobKinds: string[];
+  searchable: boolean;
+  searchRendering: "server" | "client" | "blocked";
+  isRetailer: boolean;
+}
+
+export interface HandbookSourceGroup {
+  category: string;
+  label: string;
+  role: string | null;
+  sources: HandbookSource[];
+}
+
+export interface HandbookCatalog {
+  entries: HandbookEntry[];
+  sourceGroups: HandbookSourceGroup[];
+  specSourceNote: string;
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`/api${path}`, {
     ...init,
@@ -219,6 +265,8 @@ export const api = {
   deleteChatSession: (sessionId: string) => request<void>(`/chat/sessions/${sessionId}`, { method: "DELETE" }),
   listChatMessages: (sessionId: string) =>
     request<{ messages: ChatMessage[] }>(`/chat/sessions/${sessionId}/messages`),
+  getHandbook: () => request<HandbookCatalog>("/handbook"),
+  getHandbookEntry: (slug: string) => request<{ entry: HandbookEntry }>(`/handbook/${slug}`),
   sendChatMessage: async (sessionId: string, content: string, handlers: ChatStreamHandlers = {}) => {
     const res = await fetch(`/api/chat/sessions/${sessionId}/messages`, {
       method: "POST",

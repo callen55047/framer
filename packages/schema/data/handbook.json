@@ -1,0 +1,211 @@
+[
+  {
+    "slug": "head-tube-angle",
+    "kind": "measurement",
+    "label": "Head tube angle (deg)",
+    "status": "compared",
+    "specKey": "headTubeAngleDeg",
+    "unit": "deg",
+    "appliesTo": ["frame"],
+    "typicalRange": { "min": 62, "max": 68 },
+    "illustration": { "kind": "diagram", "diagram": "head-tube-angle" },
+    "sourceIds": ["geometry-geeks", "99-spokes", "rocky-mountain-bikes"]
+  },
+  {
+    "slug": "seat-tube-angle",
+    "kind": "measurement",
+    "label": "Seat tube angle (deg)",
+    "status": "compared",
+    "specKey": "seatTubeAngleDeg",
+    "unit": "deg",
+    "appliesTo": ["frame"],
+    "typicalRange": { "min": 74, "max": 82 },
+    "illustration": { "kind": "diagram", "diagram": "seat-tube-angle" },
+    "sourceIds": ["geometry-geeks", "99-spokes", "rocky-mountain-bikes"]
+  },
+  {
+    "slug": "reach",
+    "kind": "measurement",
+    "label": "Reach (mm)",
+    "status": "compared",
+    "specKey": "reachMm",
+    "unit": "mm",
+    "appliesTo": ["frame"],
+    "typicalRange": { "min": 420, "max": 520 },
+    "illustration": { "kind": "diagram", "diagram": "reach" },
+    "sourceIds": ["geometry-geeks", "99-spokes", "rocky-mountain-bikes"]
+  },
+  {
+    "slug": "stack",
+    "kind": "measurement",
+    "label": "Stack (mm)",
+    "status": "compared",
+    "specKey": "stackMm",
+    "unit": "mm",
+    "appliesTo": ["frame"],
+    "typicalRange": { "min": 580, "max": 660 },
+    "illustration": { "kind": "diagram", "diagram": "stack" },
+    "sourceIds": ["geometry-geeks", "99-spokes", "rocky-mountain-bikes"]
+  },
+  {
+    "slug": "chainstay",
+    "kind": "measurement",
+    "label": "Chainstay (mm)",
+    "status": "compared",
+    "specKey": "chainstayMm",
+    "unit": "mm",
+    "appliesTo": ["frame"],
+    "typicalRange": { "min": 420, "max": 450 },
+    "illustration": { "kind": "diagram", "diagram": "chainstay" },
+    "sourceIds": ["geometry-geeks", "99-spokes", "rocky-mountain-bikes"]
+  },
+  {
+    "slug": "bb-drop",
+    "kind": "measurement",
+    "label": "BB drop (mm)",
+    "status": "compared",
+    "specKey": "bbDropMm",
+    "unit": "mm",
+    "appliesTo": ["frame"],
+    "typicalRange": { "min": 20, "max": 45 },
+    "illustration": { "kind": "diagram", "diagram": "bb-drop" },
+    "sourceIds": ["geometry-geeks", "99-spokes", "rocky-mountain-bikes"]
+  },
+  {
+    "slug": "wheelbase",
+    "kind": "measurement",
+    "label": "Wheelbase (mm)",
+    "status": "compared",
+    "specKey": "wheelbaseMm",
+    "unit": "mm",
+    "appliesTo": ["frame"],
+    "typicalRange": { "min": 1180, "max": 1280 },
+    "illustration": { "kind": "diagram", "diagram": "wheelbase" },
+    "sourceIds": ["geometry-geeks", "99-spokes", "rocky-mountain-bikes"]
+  },
+  {
+    "slug": "wheel-size",
+    "kind": "measurement",
+    "label": "Wheel size (in)",
+    "status": "compared",
+    "specKey": "wheelSizeInches",
+    "unit": "in",
+    "appliesTo": ["frame", "wheelset", "tires"],
+    "typicalRange": { "min": 27.5, "max": 29 },
+    "illustration": { "kind": "diagram", "diagram": "wheel-size" },
+    "sourceIds": ["geometry-geeks", "99-spokes", "specshift"]
+  },
+  {
+    "slug": "steerer-standard",
+    "kind": "standard",
+    "label": "Steerer standard",
+    "status": "compared",
+    "specKey": "steererStandard",
+    "appliesTo": ["frame", "fork", "cockpit"],
+    "illustration": { "kind": "standalone", "image": "steerer-standard.svg" },
+    "sourceIds": ["fox-bike-tech-help-center", "rockshox-trailhead", "park-tool-repair-help"]
+  },
+  {
+    "slug": "steerer-diameter",
+    "kind": "standard",
+    "label": "Steerer diameter (mm)",
+    "status": "compared",
+    "specKey": "steererDiameterMm",
+    "unit": "mm",
+    "appliesTo": ["frame", "fork", "cockpit"],
+    "illustration": { "kind": "standalone", "image": "steerer-diameter.svg" },
+    "sourceIds": ["fox-bike-tech-help-center", "rockshox-trailhead", "park-tool-repair-help"]
+  },
+  {
+    "slug": "bar-clamp-diameter",
+    "kind": "standard",
+    "label": "Bar clamp diameter (mm)",
+    "status": "compared",
+    "specKey": "barClampDiameterMm",
+    "unit": "mm",
+    "appliesTo": ["cockpit"],
+    "illustration": { "kind": "standalone", "image": "bar-clamp-diameter.svg" },
+    "sourceIds": ["park-tool-repair-help", "specshift"]
+  },
+  {
+    "slug": "seatpost-diameter",
+    "kind": "standard",
+    "label": "Seatpost diameter (mm)",
+    "status": "compared",
+    "specKey": "seatpostDiameterMm",
+    "unit": "mm",
+    "appliesTo": ["frame"],
+    "illustration": { "kind": "standalone", "image": "seatpost-diameter.svg" },
+    "sourceIds": ["geometry-geeks", "park-tool-repair-help"]
+  },
+  {
+    "slug": "bottom-bracket-standard",
+    "kind": "standard",
+    "label": "Bottom bracket standard",
+    "status": "compared",
+    "specKey": "bottomBracketStandard",
+    "appliesTo": ["frame", "drivetrain"],
+    "illustration": { "kind": "standalone", "image": "bottom-bracket-standard.svg" },
+    "sourceIds": ["shimano-product-information", "sram-service", "park-tool-repair-help"]
+  },
+  {
+    "slug": "axle-standard",
+    "kind": "standard",
+    "label": "Axle standard",
+    "status": "compared",
+    "specKey": "axleStandard",
+    "appliesTo": ["frame", "fork", "wheelset"],
+    "illustration": { "kind": "standalone", "image": "axle-standard.svg" },
+    "sourceIds": ["specshift", "shimano-product-information", "sram-service"]
+  },
+  {
+    "slug": "brake-mount",
+    "kind": "standard",
+    "label": "Brake mount",
+    "status": "compared",
+    "specKey": "brakeMount",
+    "appliesTo": ["frame", "fork"],
+    "illustration": { "kind": "standalone", "image": "brake-mount.svg" },
+    "sourceIds": ["shimano-product-information", "sram-service", "park-tool-repair-help"]
+  },
+  {
+    "slug": "max-fork-travel",
+    "kind": "standard",
+    "label": "Max fork travel (mm)",
+    "status": "compared",
+    "specKey": "maxForkTravelMm",
+    "unit": "mm",
+    "appliesTo": ["frame", "fork"],
+    "typicalRange": { "min": 120, "max": 180 },
+    "illustration": { "kind": "diagram", "diagram": "suspension-travel" },
+    "sourceIds": ["fox-bike-tech-help-center", "rockshox-trailhead", "geometry-geeks"]
+  },
+  {
+    "slug": "bb-height",
+    "kind": "measurement",
+    "label": "BB height (mm)",
+    "status": "explained",
+    "unit": "mm",
+    "appliesTo": ["frame"],
+    "illustration": { "kind": "diagram", "diagram": "bb-height" },
+    "sourceIds": ["geometry-geeks", "99-spokes"]
+  },
+  {
+    "slug": "boost-spacing",
+    "kind": "concept",
+    "label": "Boost spacing",
+    "status": "explained",
+    "appliesTo": ["frame", "fork", "wheelset"],
+    "illustration": { "kind": "standalone", "image": "boost-spacing.svg" },
+    "sourceIds": ["specshift", "park-tool-repair-help"]
+  },
+  {
+    "slug": "anti-squat",
+    "kind": "concept",
+    "label": "Anti-squat",
+    "status": "explained",
+    "appliesTo": ["frame"],
+    "illustration": { "kind": "diagram", "diagram": "anti-squat" },
+    "sourceIds": ["geometry-geeks"]
+  }
+]

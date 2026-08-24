@@ -23,7 +23,7 @@ Deciding which **Product** a newly ingested **Listing** refers to. Prefers an ex
 _Avoid_: Matching, dedup, linking
 
 **Spec**:
-A structured, typed attribute of a **Product** that came from a manufacturer source, such as steerer standard, axle standard, brake mount, or maximum fork travel. Distinct from marketing copy.
+A structured, typed attribute of a **Product** that came from a manufacturer source, such as steerer standard, axle standard, brake mount, or maximum fork travel. Distinct from marketing copy. Rider-facing labels and definitions live in the **Handbook**; `SpecSchema` keys must have a matching `compared` Handbook entry.
 _Avoid_: Attribute, property, feature
 
 **Used Item**:
@@ -53,7 +53,7 @@ _Avoid_: Fitment check, compatibility check
 ### Work
 
 **Task**:
-Something the user asked for, and the unit the Tasks tab lists. Spawns one or more **Jobs**, and its status rolls up from theirs — including a partial state when some **Jobs** succeeded and others failed.
+Something the user asked for, listed in the Tasks section on Profile. Spawns one or more **Jobs**, and its status rolls up from theirs — including a partial state when some **Jobs** succeeded and others failed.
 _Avoid_: Request, query
 
 **Job**:
@@ -85,7 +85,7 @@ The **Runner's** standing query for any **Watch** whose newest price point is ol
 _Avoid_: Cron, schedule, poller
 
 **Reference source**:
-A known website in the project's fetch inventory — manufacturer spec pages, retailers, compatibility databases, or review sites — each with a category and allowed job kinds. The Runner may warn or block fetches to domains outside this registry depending on configuration. See `docs/reference-sources.md`.
+A known website in the project's fetch inventory — manufacturer spec pages, retailers, compatibility databases, or review sites — each with a category and allowed job kinds. The Runner may warn or block fetches to domains outside this registry depending on configuration. Riders browse the same catalog in the **Handbook** Sources section. See `docs/reference-sources.md`.
 _Avoid_: Trusted source, whitelist entry
 
 ### Assistant
@@ -106,11 +106,22 @@ _Avoid_: Function call, API call
 A compressed representation of one **Assistant Session**, rebuilt by a background **Job** once the Session has been quiet for several minutes. Its reader is a *later* **Session**: the assistant lists past Sessions and pulls the summary of a relevant one through a **Tool Call**. Never injected into a turn, and never a stand-in for the current Session's own transcript.
 _Avoid_: Chat memory, context window hack
 
+### Knowledge
+
+**Handbook**:
+The rider-facing dictionary of MTB measurements, fitment standards, concepts, and reference sources. Code-authoritative: entries are validated against `SpecSchema` and `reference-sources.json`, not user-edited at runtime. Distinct from this document (`CONTEXT.md`), which is the dev-facing domain glossary.
+_Avoid_: Glossary (in UI — that name is reserved for this file)
+
+**Handbook Entry**:
+One item in the Handbook — a `measurement` (numeric geometry), `standard` (categorical fitment), or `concept` (educational). Status is `compared` when backed by a `SpecSchema` key used in Compatibility Rules, or `explained` when taught but not yet captured as a Spec.
+_Avoid_: Metric, attribute page, wiki article
+
 ## Flagged ambiguities
 
 - **Repo name "framer"** — collides with the Framer design tool, and reads as "frames" when the app spans whole builds. Worth renaming before it appears in a hundred import paths.
 - **"Price history"** — belongs to a **Listing**, never to a **Product**. A **Product's** price is always derived as the cheapest live **Listing** at a moment in time, and is not stored.
 - **"Compatibility"** — always a **Compatibility Rule** evaluated over **Specs**, never a model-authored opinion. If someone proposes asking the model whether two parts fit, that is a different feature and needs a different name.
+- **BB height vs BB drop** — **BB drop** is frame-intrinsic (BB below the axle line) and is a `compared` Handbook measurement. **BB height** is ground clearance and changes with tires and sag; it is `explained` only and must not be merged into Spec comparison.
 
 ## Example dialogue
 
@@ -130,6 +141,6 @@ _Avoid_: Chat memory, context window hack
 
 **Rider**: A Compatibility Rule fired. The frame's Spec caps fork travel at 150mm, and that's a database comparison over two Specs, not the model's opinion. The model only ever put `max_travel_mm: 150` into the Product in the first place, and only because that number appeared verbatim on the manufacturer page — that's Grounding.
 
-**Dev**: And the Tasks tab shows "partial" on their deal search.
+**Dev**: And Tasks on their Profile shows "partial" on their deal search.
 
 **Rider**: One Task, three Jobs, one per retailer. Two returned Listings, one failed at the fetch Stage. The Artifact from the two that worked is still on disk, so retrying only re-runs the broken Stage — we don't re-fetch pages that already succeeded.

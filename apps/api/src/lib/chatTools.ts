@@ -4,6 +4,11 @@ import {
   LOCAL_OWNER_ID,
   ReferenceSourceCategorySchema,
   SPEC_FIELD_LABELS,
+  getHandbookEntryBySpecKey,
+  loadHandbookEntryWithProse,
+  handbookAnnotationId,
+  handbookDiagramId,
+  handbookIllustrationPublicPath,
   type ProductCategory,
   type Spec,
 } from "@framer/schema";
@@ -198,6 +203,22 @@ export const CHAT_TOOLS: ChatTool[] = [
       additionalProperties: false,
     },
   },
+  {
+    name: "getHandbookEntry",
+    description:
+      "Retrieve a Handbook entry — rider-facing definitions for MTB measurements, fitment standards, and concepts. Use before explaining geometry or compatibility terms.",
+    parameters: {
+      type: "object",
+      properties: {
+        slug: { type: "string", description: "Handbook entry slug (e.g. head-tube-angle, bb-drop, boost-spacing)" },
+        specKey: {
+          type: "string",
+          description: "Alternative lookup by SpecSchema key (e.g. headTubeAngleDeg) when slug is unknown",
+        },
+      },
+      additionalProperties: false,
+    },
+  },
 ];
 
 const WATCH_LIST_QUERY = `select
@@ -261,6 +282,8 @@ export async function executeChatTool(
       return listSessionSummariesTool(args, context);
     case "getSessionSummary":
       return getSessionSummaryTool(args, context);
+    case "getHandbookEntry":
+      return getHandbookEntryTool(args);
     default:
       throw new Error(`Unknown tool: ${name}`);
   }
@@ -516,7 +539,7 @@ async function enqueueResearchTool(args: Record<string, unknown>, context: ChatT
   return {
     task: mapTask(task),
     jobId: jobs[0]?.id ?? null,
-    message: "Research queued — check the Tasks tab for progress.",
+    message: "Research queued — check Tasks on your Profile for progress.",
   };
 }
 
@@ -561,6 +584,43 @@ async function getSessionSummaryTool(args: Record<string, unknown>, context: Cha
     sessionId,
     summary: row.summary as string,
     summaryUpdatedAt: row.summary_updated_at as string,
+  };
+}
+
+async function getHandbookEntryTool(args: Record<string, unknown>) {
+  const slug = typeof args.slug === "string" ? args.slug.trim() : "";
+  const specKey = typeof args.specKey === "string" ? args.specKey.trim() : "";
+
+  let resolvedSlug = slug;
+  if (!resolvedSlug && specKey) {
+    resolvedSlug = getHandbookEntryBySpecKey(specKey as keyof Spec)?.slug ?? "";
+  }
+
+  if (!resolvedSlug) {
+    throw new Error("Handbook entry not found — provide slug or specKey");
+  }
+
+  const entry = loadHandbookEntryWithProse(resolvedSlug);
+  if (!entry) {
+    throw new Error("Handbook entry not found — provide slug or specKey");
+  }
+
+  return {
+    slug: entry.slug,
+    kind: entry.kind,
+    label: entry.label,
+    status: entry.status,
+    specKey: entry.specKey ?? null,
+    unit: entry.unit ?? null,
+    appliesTo: entry.appliesTo ?? [],
+    typicalRange: entry.typicalRange ?? null,
+    summary: entry.summary,
+    prose: entry.prose,
+    illustrationPath: handbookIllustrationPublicPath(entry.illustration),
+    baseBikePath: null,
+    diagram: handbookDiagramId(entry.illustration),
+    annotation: handbookAnnotationId(entry.illustration),
+    sourceIds: entry.sourceIds ?? [],
   };
 }
 

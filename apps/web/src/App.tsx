@@ -1,11 +1,12 @@
-import { Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes } from "react-router-dom";
 import { Sidebar } from "./components/Sidebar.js";
 import { DashboardPage } from "./pages/DashboardPage.js";
 import { WatchlistPage } from "./pages/WatchlistPage.js";
 import { GaragePage } from "./pages/GaragePage.js";
-import { TasksPage } from "./pages/TasksPage.js";
 import { ProfilePage } from "./pages/ProfilePage.js";
 import { AssistantPage } from "./pages/AssistantPage.js";
+import { HandbookPage } from "./pages/HandbookPage.js";
+import { HandbookEntryPage } from "./pages/HandbookEntryPage.js";
 
 export default function App() {
   return (
@@ -16,9 +17,11 @@ export default function App() {
           <Route path="/" element={<DashboardPage />} />
           <Route path="/watchlist" element={<WatchlistPage />} />
           <Route path="/garage" element={<GaragePage />} />
-          <Route path="/tasks" element={<TasksPage />} />
           <Route path="/assistant" element={<AssistantPage />} />
           <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/handbook" element={<HandbookPage />} />
+          <Route path="/handbook/:slug" element={<HandbookEntryPage />} />
+          <Route path="/tasks" element={<Navigate to="/profile" replace />} />
         </Routes>
       </main>
     </div>

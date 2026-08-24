@@ -32,25 +32,6 @@ export const SpecSchema = z
 
 export type Spec = z.infer<typeof SpecSchema>;
 
-export const SPEC_FIELD_LABELS: Record<keyof Spec, string> = {
-  steererStandard: "Steerer standard",
-  steererDiameterMm: "Steerer diameter (mm)",
-  barClampDiameterMm: "Bar clamp diameter (mm)",
-  seatpostDiameterMm: "Seatpost diameter (mm)",
-  bottomBracketStandard: "Bottom bracket standard",
-  axleStandard: "Axle standard",
-  brakeMount: "Brake mount",
-  maxForkTravelMm: "Max fork travel (mm)",
-  headTubeAngleDeg: "Head tube angle (deg)",
-  seatTubeAngleDeg: "Seat tube angle (deg)",
-  reachMm: "Reach (mm)",
-  stackMm: "Stack (mm)",
-  chainstayMm: "Chainstay (mm)",
-  bbDropMm: "BB drop (mm)",
-  wheelbaseMm: "Wheelbase (mm)",
-  wheelSizeInches: "Wheel size (in)",
-};
-
 /** Slot names the assistant uses when searching for compatible parts. */
 export const BuildSlotSchema = z.enum([
   "frame",

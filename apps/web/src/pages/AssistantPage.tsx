@@ -17,6 +17,7 @@ const TOOL_ACTIVITY_LABELS: Record<string, string> = {
   enqueueResearch: "Queueing background research…",
   listSessionSummaries: "Listing past sessions…",
   getSessionSummary: "Loading session summary…",
+  getHandbookEntry: "Loading handbook entry…",
 };
 
 function toolActivityLabel(toolName: string): string {

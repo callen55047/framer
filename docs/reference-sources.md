@@ -2,6 +2,8 @@
 
 Canonical inventory of MTB websites the Runner may fetch when executing model-backed jobs. Machine-readable catalog: [`packages/schema/data/reference-sources.json`](../packages/schema/data/reference-sources.json). Typed helpers live in `@framer/schema` (`referenceSources.ts`).
 
+Riders browse the same catalog in the app **Handbook** (Sources section). See [CONTEXT.md](../CONTEXT.md#Handbook).
+
 See [CONTEXT.md](../CONTEXT.md) for the boundary: the Runner fetches pages; the local model extracts from page text; **Grounding** rejects values not present in the fetched HTML. Reference sources define **where** to look and **what role** each domain plays—not what to trust without grounding.
 
 For enrolled retailers, affiliate **Feeds** remain the preferred path for new-retail Listings once feed ingestion lands; see [affiliate-programs.md](./affiliate-programs.md). Retailer URLs here are the scrape fallback and POC inventory.

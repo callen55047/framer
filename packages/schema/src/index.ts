@@ -1,6 +1,7 @@
 export * from "./ids.js";
 export * from "./owner.js";
 export * from "./spec.js";
+export * from "./handbook.js";
 export * from "./product.js";
 export * from "./listing.js";
 export * from "./watch.js";
@@ -14,5 +15,6 @@ export * from "./referenceSources.js";
 export * from "./listingItem.js";
 export * from "./relevance.js";
 export * from "./bikeConfig.js";
+export * from "./bikeGeometry.js";
 export * from "./variant.js";
 export * from "./chat.js";
