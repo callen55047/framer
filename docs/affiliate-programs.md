@@ -39,4 +39,4 @@ Once a network (Impact or AvantLink) grants access, the datafeed itself is
 typically a CSV/XML/JSON URL with an API key. Feed ingestion is not yet
 implemented (see the plan's "After the slice" ordering — it's the first
 thing built after the RefreshListing slice is proven). When it lands, credentials
-go in `apps/runner/.env` alongside `OLLAMA_*`, never committed.
+go in `apps/runner/.env` alongside `LM_STUDIO_*`, never committed.

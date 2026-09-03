@@ -7,7 +7,7 @@ const pocDir = path.resolve(moduleDir, "../fixtures/poc");
 
 async function main(): Promise<void> {
   process.env.MOCK_INFERENCE = "1";
-  const report = await runPocBenchmark({ pocDir, mock: true, providers: ["ollama"] });
+  const report = await runPocBenchmark({ pocDir, mock: true, providers: ["lmstudio"] });
   await writeBenchmarkArtifacts(pocDir, report);
 
   if (!report.summary.gatePassed) {

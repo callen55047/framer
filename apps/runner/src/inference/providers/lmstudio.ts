@@ -154,7 +154,7 @@ export function createLmStudioProvider(config: InferenceConfig): InferenceProvid
           messages: toOpenAiMessages(messages),
           tools: tools.length > 0 ? toOpenAiTools(tools) : undefined,
           stream: true,
-          temperature: 0.7,
+          temperature: config.chatTemperature ?? 0.3,
         }),
       });
 

@@ -102,6 +102,10 @@ _Avoid_: Chat entry, prompt
 A read-only lookup the assistant issues mid-turn to pull in just the domain data it needs, instead of the server stuffing everything into the prompt upfront. Shown in the transcript as a collapsed step, same transparency pattern as Job **Stage**s.
 _Avoid_: Function call, API call
 
+**Clarification**:
+A **Message** the assistant ends its turn with when the answer materially depends on something no **Tool Call** can resolve — frame size, model year, wheel config, budget. One question with two to four options, rendered as tappable chips; the tapped option becomes the rider's next **Message**. Any lookups issued alongside it still run first, so the next turn does not repeat them.
+_Avoid_: Follow-up prompt, disambiguation dialog
+
 **Session Summary**:
 A compressed representation of one **Assistant Session**, rebuilt by a background **Job** once the Session has been quiet for several minutes. Its reader is a *later* **Session**: the assistant lists past Sessions and pulls the summary of a relevant one through a **Tool Call**. Never injected into a turn, and never a stand-in for the current Session's own transcript.
 _Avoid_: Chat memory, context window hack
@@ -119,7 +123,7 @@ _Avoid_: Metric, attribute page, wiki article
 ## Flagged ambiguities
 
 - **Repo name "framer"** — collides with the Framer design tool, and reads as "frames" when the app spans whole builds. Worth renaming before it appears in a hundred import paths.
-- **"Price history"** — belongs to a **Listing**, never to a **Product**. A **Product's** price is always derived as the cheapest live **Listing** at a moment in time, and is not stored.
+- **"Price history"** — belongs to a **Listing**, never to a **Product**. A **Product's** price is always derived as the cheapest live **Listing** at a moment in time, and is not stored. The derivation lives in `apps/api/src/services/productListingsService.ts` and excludes used, inactive, and out-of-stock Listings.
 - **"Compatibility"** — always a **Compatibility Rule** evaluated over **Specs**, never a model-authored opinion. If someone proposes asking the model whether two parts fit, that is a different feature and needs a different name.
 - **BB height vs BB drop** — **BB drop** is frame-intrinsic (BB below the axle line) and is a `compared` Handbook measurement. **BB height** is ground clearance and changes with tires and sag; it is `explained` only and must not be merged into Spec comparison.
 

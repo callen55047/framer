@@ -4,7 +4,7 @@ import { zodToJsonSchema } from "zod-to-json-schema";
 const schemaDocument = zodToJsonSchema(ListingExtractionSchema, "ListingExtraction");
 
 /**
- * JSON Schema object for ListingExtraction, suitable for Ollama `format` and
+ * JSON Schema object for ListingExtraction, suitable for LM Studio's
  * OpenAI-compatible `response_format.json_schema.schema`.
  */
 export function getListingExtractionJsonSchema(): Record<string, unknown> {

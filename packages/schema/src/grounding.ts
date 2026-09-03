@@ -4,8 +4,8 @@ import type { GroundingResult } from "./extraction.js";
 /**
  * Grounding: every value produced by Extraction must normalize-match text
  * actually present in the source Artifact. This is the defense against
- * schema-valid-but-wrong output — constrained decoding (Ollama's `format`
- * parameter) guarantees shape, not truth. See CONTEXT.md#Grounding.
+ * schema-valid-but-wrong output — constrained decoding (LM Studio's
+ * `response_format.json_schema` parameter) guarantees shape, not truth. See CONTEXT.md#Grounding.
  *
  * Deliberately pure and dependency-free so it can be unit tested and reused
  * by the offline replay harness without touching the network or the model.

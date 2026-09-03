@@ -12,7 +12,7 @@ describe("sessionSummarySchedule", () => {
     const sessionId = newId();
     await pool.query(
       `insert into chat_sessions (id, owner_id, title, title_source, provider, model)
-       values ($1, $2, 'Test chat', 'auto', 'ollama', 'test')`,
+       values ($1, $2, 'Test chat', 'auto', 'lmstudio', 'test')`,
       [sessionId, LOCAL_OWNER_ID]
     );
     await pool.query(
@@ -177,8 +177,8 @@ describe("session summary reader tools", () => {
       const pastSessionId = newId();
       await pool.query(
         `insert into chat_sessions (id, owner_id, title, title_source, provider, model, summary, summary_updated_at)
-         values ($1, $2, 'Current chat', 'auto', 'ollama', 'test', null, null),
-                ($3, $2, 'Past build notes', 'auto', 'ollama', 'test', 'User asked about stem length.', datetime('now'))`,
+         values ($1, $2, 'Current chat', 'auto', 'lmstudio', 'test', null, null),
+                ($3, $2, 'Past build notes', 'auto', 'lmstudio', 'test', 'User asked about stem length.', datetime('now'))`,
         [currentSessionId, LOCAL_OWNER_ID, pastSessionId]
       );
 

@@ -1,10 +1,11 @@
 import { mkdirSync } from "node:fs";
 import { configureJobApi } from "@framer/runner/lib/jobApi.js";
-import { reloadInferenceFromEnv } from "@framer/runner/config.js";
+import { config as runnerConfig, reloadInferenceFromEnv } from "@framer/runner/config.js";
 import { runJob } from "@framer/runner/pipeline.js";
 import type { JobKind, JobRecord } from "@framer/schema";
 import { config } from "../config.js";
 import { createInternalJobApi } from "./internalJobApi.js";
+import { applyRunnerInferenceEnv } from "./inferenceEnv.js";
 import { runSummarizeChatSessionJob } from "../services/chatSummarizeService.js";
 
 const IMPLEMENTED_KINDS: JobKind[] = [
@@ -14,29 +15,6 @@ const IMPLEMENTED_KINDS: JobKind[] = [
   "ExtractSpecs",
   "ResearchQuestion",
 ];
-
-function applyRunnerInferenceEnv(): void {
-  process.env.INFERENCE_PROVIDER = config.runner.inferenceProvider;
-  if (config.runner.inferenceBaseUrl) {
-    process.env.INFERENCE_BASE_URL = config.runner.inferenceBaseUrl;
-  } else {
-    delete process.env.INFERENCE_BASE_URL;
-  }
-  if (config.runner.inferenceModel) {
-    process.env.INFERENCE_MODEL = config.runner.inferenceModel;
-  } else {
-    delete process.env.INFERENCE_MODEL;
-  }
-  process.env.OLLAMA_BASE_URL = config.runner.ollamaBaseUrl;
-  process.env.OLLAMA_MODEL = config.runner.ollamaModel;
-  process.env.LM_STUDIO_BASE_URL = config.runner.lmStudioBaseUrl;
-  if (config.runner.lmStudioModel) {
-    process.env.LM_STUDIO_MODEL = config.runner.lmStudioModel;
-  } else {
-    delete process.env.LM_STUDIO_MODEL;
-  }
-  reloadInferenceFromEnv();
-}
 
 export function startIntegratedRunner(): void {
   if (!config.runner.enabled) {
@@ -50,6 +28,7 @@ export function startIntegratedRunner(): void {
   process.env.FETCH_POOL_MIN_INTERVAL_PER_DOMAIN_MS = String(config.runner.fetchPoolMinIntervalPerDomainMs);
   process.env.INFERENCE_POOL_DEPTH = String(config.runner.inferencePoolDepth);
   applyRunnerInferenceEnv();
+  reloadInferenceFromEnv();
 
   const jobApi = createInternalJobApi(config.runner.agentId, config.runner.leaseSeconds);
   configureJobApi(jobApi);
@@ -99,18 +78,10 @@ export function startIntegratedRunner(): void {
     stopping = true;
   });
 
-  const inference = config.runner.inferenceProvider;
-  const model =
-    config.runner.inferenceModel ??
-    (inference === "lmstudio"
-      ? config.runner.lmStudioModel ?? config.runner.ollamaModel
-      : config.runner.ollamaModel);
-  const baseUrl =
-    config.runner.inferenceBaseUrl ??
-    (inference === "lmstudio" ? config.runner.lmStudioBaseUrl : config.runner.ollamaBaseUrl);
+  const { provider, baseUrl, model } = runnerConfig.inference;
 
   console.log(
-    `[runner] integrated (${config.runner.agentId}): inference=${inference} baseUrl=${baseUrl} model=${model}`
+    `[runner] integrated (${config.runner.agentId}): inference=${provider} baseUrl=${baseUrl} model=${model}`
   );
   void loop();
 }

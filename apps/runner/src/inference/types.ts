@@ -7,13 +7,15 @@ import type {
   Spec,
 } from "@framer/schema";
 
-export const INFERENCE_PROVIDER_KINDS = ["ollama", "lmstudio"] as const;
+export const INFERENCE_PROVIDER_KINDS = ["lmstudio"] as const;
 export type InferenceProviderKind = (typeof INFERENCE_PROVIDER_KINDS)[number];
 
 export interface InferenceConfig {
   provider: InferenceProviderKind;
   baseUrl: string;
   model: string;
+  /** Sampling temperature for assistant chat turns. Lower is more reliable for tool calling on small local models. */
+  chatTemperature?: number;
 }
 
 export interface ChatMessage {

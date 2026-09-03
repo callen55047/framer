@@ -4,25 +4,7 @@ import { ChatMessageList } from "../components/ChatMessageList.js";
 import { ChatSessionRow } from "../components/ChatSessionRow.js";
 import { PageHeader } from "../components/PageHeader.js";
 import { api, type ChatMessage, type ChatSession } from "../lib/api.js";
-
-const TOOL_ACTIVITY_LABELS: Record<string, string> = {
-  listWatches: "Checking your watches…",
-  listTasks: "Checking tasks…",
-  searchProducts: "Searching products…",
-  getListing: "Looking up listing…",
-  searchReference: "Searching reference sites…",
-  fetchReferencePage: "Fetching reference page…",
-  checkCompatibility: "Checking compatibility…",
-  findCompatibleProducts: "Finding compatible parts…",
-  enqueueResearch: "Queueing background research…",
-  listSessionSummaries: "Listing past sessions…",
-  getSessionSummary: "Loading session summary…",
-  getHandbookEntry: "Loading handbook entry…",
-};
-
-function toolActivityLabel(toolName: string): string {
-  return TOOL_ACTIVITY_LABELS[toolName] ?? `Using ${toolName}…`;
-}
+import { toolActivityLabel } from "../lib/chatToolLabels.js";
 
 export function AssistantPage() {
   const [sessions, setSessions] = useState<ChatSession[]>([]);
@@ -101,12 +83,11 @@ export function AssistantPage() {
     }
   }
 
-  async function handleSend(event: React.FormEvent) {
-    event.preventDefault();
-    if (!activeSessionId || !draft.trim() || sending) return;
+  async function sendMessage(rawContent: string) {
+    const content = rawContent.trim();
+    if (!activeSessionId || !content || sending) return;
     if (activeSession?.status === "full") return;
 
-    const content = draft.trim();
     setDraft("");
     setSending(true);
     setStreamingText("");
@@ -120,9 +101,15 @@ export function AssistantPage() {
           setStreamingText((prev) => prev + delta);
         },
         onToolCall: (toolName) => setActivity(toolActivityLabel(toolName)),
+        onClarification: () => setActivity(null),
         onMessage: (message) => {
           if (message.role === "tool") {
             setActivity("Thinking…");
+          }
+          if (message.role === "assistant") {
+            // The streamed text now lives in a persisted message; clear the live bubble
+            // so it is not shown twice when the model continues after tool calls.
+            setStreamingText("");
           }
           setMessages((prev) => {
             const existing = prev.findIndex((item) => item.id === message.id);
@@ -149,6 +136,11 @@ export function AssistantPage() {
     }
   }
 
+  function handleSend(event: React.FormEvent) {
+    event.preventDefault();
+    void sendMessage(draft);
+  }
+
   if (loading) {
     return (
       <div className="flex h-full items-center justify-center text-sm text-neutral-500">Loading assistant…</div>
@@ -159,7 +151,7 @@ export function AssistantPage() {
     <div className="flex h-full flex-col">
       <PageHeader
         title="Assistant"
-        subtitle="Domain-aware chat with read-only access to your watches, tasks, and catalog."
+        subtitle="Domain-aware chat with read-only access to your watches, tasks, catalog prices, and price history."
         action={
           <button
             type="button"
@@ -214,13 +206,15 @@ export function AssistantPage() {
                 messages={messages}
                 streamingText={streamingText || undefined}
                 activity={activity}
+                disabled={sending || isActiveSessionFull}
+                onOptionSelect={(text) => void sendMessage(text)}
               />
               {error && (
                 <div className="mx-8 mb-2 rounded-lg border border-red-900/60 bg-red-950/40 px-3 py-2 text-xs text-red-300">
                   {error}
                 </div>
               )}
-              <form onSubmit={(event) => void handleSend(event)} className="border-t border-neutral-800 px-8 py-4">
+              <form onSubmit={handleSend} className="border-t border-neutral-800 px-8 py-4">
                 {isActiveSessionFull && (
                   <p className="mb-2 text-sm text-neutral-400">This session is full — start a new one to continue.</p>
                 )}
@@ -231,11 +225,11 @@ export function AssistantPage() {
                     onKeyDown={(event) => {
                       if (event.key === "Enter" && !event.shiftKey) {
                         event.preventDefault();
-                        void handleSend(event);
+                        void sendMessage(draft);
                       }
                     }}
                     rows={2}
-                    placeholder="Ask about your watches, tasks, or products…"
+                    placeholder="Ask about prices, your watches, compatibility, or products…"
                     disabled={sending || isActiveSessionFull}
                     className="min-h-[52px] flex-1 resize-none rounded-xl border border-neutral-800 bg-neutral-900 px-4 py-3 text-sm text-neutral-100 placeholder:text-neutral-600 focus:border-brand-purple/50 focus:outline-none disabled:opacity-60"
                   />

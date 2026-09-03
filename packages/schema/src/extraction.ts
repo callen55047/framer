@@ -1,8 +1,8 @@
 import { z } from "zod";
 
 /**
- * The exact shape requested from the local model via Ollama's `format`
- * parameter (schema-constrained decoding). Shape is guaranteed by the
+ * The exact shape requested from the local model via LM Studio's
+ * `response_format.json_schema` parameter (schema-constrained decoding). Shape is guaranteed by the
  * constraint; truth is not — see Grounding. Every field here must be
  * verifiable against the source Artifact text.
  */

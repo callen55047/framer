@@ -33,6 +33,14 @@ export const ChatSessionSchema = z.object({
 });
 export type ChatSession = z.infer<typeof ChatSessionSchema>;
 
+/** One Tool Call issued by an assistant Message. `id` is the chat_messages.id of the matching tool row. */
+export const ChatToolCallSchema = z.object({
+  id: IdSchema,
+  name: z.string().min(1),
+  args: z.record(z.unknown()),
+});
+export type ChatToolCall = z.infer<typeof ChatToolCallSchema>;
+
 export const ChatMessageSchema = z.object({
   id: IdSchema,
   sessionId: IdSchema,
@@ -41,10 +49,25 @@ export const ChatMessageSchema = z.object({
   toolName: z.string().nullable(),
   toolArgs: z.record(z.unknown()).nullable(),
   toolResult: z.unknown().nullable(),
+  toolCalls: z.array(ChatToolCallSchema).nullable().optional(),
   tokenCount: z.number().int().nonnegative(),
   createdAt: z.string().datetime(),
 });
 export type ChatMessage = z.infer<typeof ChatMessageSchema>;
+
+/**
+ * Name of the tool the assistant calls to end its turn with a Clarification.
+ * The resulting assistant Message carries `toolName` = this constant and
+ * `toolArgs` = a parsed `Clarification`. See CONTEXT.md#Assistant.
+ */
+export const CLARIFYING_QUESTION_TOOL_NAME = "askClarifyingQuestion" as const;
+
+export const ClarificationSchema = z.object({
+  question: z.string().trim().min(1).max(500),
+  options: z.array(z.string().trim().min(1).max(80)).min(2).max(4).optional(),
+  allowFreeText: z.boolean().default(true),
+});
+export type Clarification = z.infer<typeof ClarificationSchema>;
 
 export const CreateChatSessionInputSchema = z.object({
   title: z.string().min(1).max(120).optional(),

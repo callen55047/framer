@@ -205,6 +205,15 @@ export function mapChatMessage(row: any) {
       toolResult = row.tool_result;
     }
   }
+  let toolCalls: Array<{ id: string; name: string; args: Record<string, unknown> }> | null = null;
+  if (row.tool_calls) {
+    try {
+      const parsed = typeof row.tool_calls === "string" ? JSON.parse(row.tool_calls) : row.tool_calls;
+      toolCalls = Array.isArray(parsed) && parsed.length > 0 ? parsed : null;
+    } catch {
+      toolCalls = null;
+    }
+  }
   return {
     id: row.id,
     sessionId: row.session_id,
@@ -213,6 +222,7 @@ export function mapChatMessage(row: any) {
     toolName: row.tool_name ?? null,
     toolArgs,
     toolResult,
+    toolCalls,
     tokenCount: toNumber(row.token_count) ?? 0,
     createdAt: toIso(row.created_at),
   };

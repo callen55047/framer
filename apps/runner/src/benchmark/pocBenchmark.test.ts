@@ -10,7 +10,7 @@ describe("runPocBenchmark", () => {
     const report = await runPocBenchmark({
       pocDir,
       mock: true,
-      providers: ["ollama"],
+      providers: ["lmstudio"],
     });
 
     expect(report.summary.total).toBe(4);

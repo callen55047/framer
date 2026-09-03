@@ -1,6 +1,6 @@
 import type { ChatMessage, ChatTool } from "./types.js";
 
-export function toOllamaTools(tools: ChatTool[]) {
+export function toOpenAiTools(tools: ChatTool[]) {
   return tools.map((tool) => ({
     type: "function",
     function: {
@@ -11,7 +11,7 @@ export function toOllamaTools(tools: ChatTool[]) {
   }));
 }
 
-export function toOllamaMessages(messages: ChatMessage[]) {
+export function toOpenAiMessages(messages: ChatMessage[]) {
   return messages.map((message) => {
     if (message.role === "tool") {
       return {
@@ -36,51 +36,6 @@ export function toOllamaMessages(messages: ChatMessage[]) {
     }
     return { role: message.role, content: message.content };
   });
-}
-
-export function toOpenAiTools(tools: ChatTool[]) {
-  return toOllamaTools(tools);
-}
-
-export function toOpenAiMessages(messages: ChatMessage[]) {
-  return toOllamaMessages(messages);
-}
-
-export async function* parseNdjsonStream(
-  body: ReadableStream<Uint8Array> | null
-): AsyncGenerator<Record<string, unknown>> {
-  if (!body) return;
-  const reader = body.getReader();
-  const decoder = new TextDecoder();
-  let buffer = "";
-  try {
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split("\n");
-      buffer = lines.pop() ?? "";
-      for (const line of lines) {
-        const trimmed = line.trim();
-        if (!trimmed) continue;
-        try {
-          yield JSON.parse(trimmed) as Record<string, unknown>;
-        } catch {
-          // skip malformed chunks
-        }
-      }
-    }
-    const tail = buffer.trim();
-    if (tail) {
-      try {
-        yield JSON.parse(tail) as Record<string, unknown>;
-      } catch {
-        // ignore
-      }
-    }
-  } finally {
-    reader.releaseLock();
-  }
 }
 
 export async function* parseOpenAiSseStream(

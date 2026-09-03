@@ -51,7 +51,9 @@ describe("baseline helpers", () => {
     expect(sanitizeBaselineFilename("lmstudio/qwen3.5-9b-deepseek-v4-flash")).toBe(
       "lmstudio__qwen3.5-9b-deepseek-v4-flash"
     );
-    expect(sanitizeBaselineFilename("ollama/llama3.2:latest")).toBe("ollama__llama3.2__latest");
+    expect(sanitizeBaselineFilename("lmstudio/google/gemma-4-e2b:q4")).toBe(
+      "lmstudio__google__gemma-4-e2b__q4"
+    );
   });
 
   it("derives baseline ID from first result", () => {

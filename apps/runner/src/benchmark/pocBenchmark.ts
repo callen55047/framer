@@ -242,7 +242,7 @@ export function createMockProvider(fixtures: PocFixture[]): ReturnType<typeof cr
   const byId = new Map(fixtures.map((fixture) => [fixture.id, fixture.expected]));
 
   return {
-    kind: "ollama",
+    kind: "lmstudio",
     async extractListing(_pageText: string): Promise<ListingExtraction> {
       const fixtureId = process.env.BENCHMARK_MOCK_FIXTURE_ID;
       const expected = fixtureId ? byId.get(fixtureId) : undefined;

@@ -37,9 +37,11 @@ Key settings from `apps/api/src/config.ts`:
 | `RUNNER_POLL_INTERVAL_MS` | `2000` | Claim loop interval |
 | `FRAMER_SWEEP_ENABLED` | `true` | Watch price refresh sweep inside claim |
 | `CHAT_SUMMARY_IDLE_MINUTES` | `5` | Session summary debounce window |
+| `CHAT_TOOL_RESULT_MAX_CHARS` | `8000` | Cap on one Tool Call result forwarded to the model (full result still persisted) |
+| `INFERENCE_CHAT_TEMPERATURE` | `0.3` | Sampling temperature for assistant chat turns; extraction stays at 0 |
 | `AGENT_TOKEN` | `dev-agent-token` | Bearer token for external HTTP executors |
 
-Inference provider settings (`INFERENCE_PROVIDER`, `OLLAMA_*`, `LM_STUDIO_*`, pool sizes) are passed through to the integrated Runner at startup.
+Inference provider settings (`INFERENCE_PROVIDER`, `LM_STUDIO_*`, pool sizes) are passed through to the integrated Runner at startup.
 
 ---
 
@@ -88,7 +90,7 @@ framer/
 | `src/pipeline.ts` | Job kind dispatch to stage sequences |
 | `src/stages/` | fetch → validate → extract → resolve → persist |
 | `src/pools/` | Domain-rate-limited fetch pool; inference pool (depth 1–2) |
-| `src/inference/` | Ollama / LM Studio providers, extraction schemas |
+| `src/inference/` | LM Studio provider, extraction schemas |
 | `src/lib/jobApi.ts` | Pluggable JobApi interface (HTTP or in-process) |
 | `src/lib/httpJobApi.ts` | HTTP client for standalone worker mode |
 
@@ -228,7 +230,9 @@ Instead, the Garage builds a stylized, dimensionally-accurate frame from tubes s
 
 Assistant Sessions are persisted conversations with a 128k-token context budget. When full, the Session stops accepting messages.
 
-- **Tool Calls** — read-only lookups mid-turn (`chatTools.ts`); shown collapsed in the transcript like Job Stages
+- **Tool Calls** — read-only lookups mid-turn (`chatTools.ts`); shown collapsed in the transcript like Job Stages. Each call gets a fresh UUID that is both the persisted tool row's id and the `tool_call_id` the provider sees, and the assistant row stores its `tool_calls` so history replays with valid pairing. Results over `CHAT_TOOL_RESULT_MAX_CHARS` are truncated for the model only. Up to 10 tool iterations per turn; after that a tools-off call forces a final answer
+- **Clarification** — the assistant ends its turn by calling `askClarifyingQuestion`; persisted as an assistant Message with `toolName` set and options in `toolArgs`, streamed as a `clarification` SSE event, rendered as tappable chips. Lookups issued in the same iteration run first
+- **Catalog price tools** — `searchProducts` (category/year filters, cheapest live price), `getProductListings`, `getPriceHistory`, `listRetailers`. The derived Product price (cheapest in-stock, new, active Listing) lives in `productListingsService.ts`
 - **Session Summary** — compressed by a background `SummarizeChatSession` Job after idle; read by a *later* Session via tool call, never injected into the current turn's context
 
 See [CONTEXT.md](../CONTEXT.md#assistant) for glossary terms.

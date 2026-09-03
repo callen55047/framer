@@ -1,9 +1,12 @@
 import {
   BUILD_SLOT_TO_CATEGORY,
   BuildSlotSchema,
+  CLARIFYING_QUESTION_TOOL_NAME,
   LOCAL_OWNER_ID,
+  ProductCategorySchema,
   ReferenceSourceCategorySchema,
   SPEC_FIELD_LABELS,
+  findReferenceSourceByDomain,
   getHandbookEntryBySpecKey,
   loadHandbookEntryWithProse,
   handbookAnnotationId,
@@ -26,7 +29,8 @@ import {
   parseProductSpecs,
   type CompatibilityProduct,
 } from "./compatibilityRules.js";
-import { mapListing, mapProduct, mapTask, mapWatch } from "./mappers.js";
+import { mapListing, mapPricePoint, mapProduct, mapTask, mapWatch, toIso } from "./mappers.js";
+import { deriveProductPrice, listProductListings } from "../services/productListingsService.js";
 import { computeWatchVariantSummary } from "../services/variantsService.js";
 
 const REFERENCE_CATEGORY_ENUM = ReferenceSourceCategorySchema.options.filter((category) =>
@@ -58,14 +62,61 @@ export const CHAT_TOOLS: ChatTool[] = [
   },
   {
     name: "searchProducts",
-    description: "Search products by brand or model substring.",
+    description:
+      "Search the catalog by brand/model text and/or category/year. Returns Products with listing counts and the cheapest live price — use this first for any \"how much is X\" question.",
     parameters: {
       type: "object",
       properties: {
-        query: { type: "string", description: "Brand or model search text" },
+        query: { type: "string", description: "Brand or model search text (substring match)" },
+        category: {
+          type: "string",
+          enum: ProductCategorySchema.options,
+          description: "Restrict to one product category",
+        },
+        modelYear: { type: "integer", minimum: 1990, maximum: 2100, description: "Restrict to one model year" },
         limit: { type: "integer", minimum: 1, maximum: 50, description: "Max products to return (default 10)" },
       },
-      required: ["query"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "getProductListings",
+    description:
+      "Every retailer Listing for one Product with latest price, stock, and the derived Product price (cheapest in-stock new Listing). Resolve the Product by id or by brand/model text.",
+    parameters: {
+      type: "object",
+      properties: {
+        productId: { type: "string", description: "Product UUID from searchProducts" },
+        brand: { type: "string", description: "Brand to search if productId omitted" },
+        model: { type: "string", description: "Model to search if productId omitted" },
+        query: { type: "string", description: "Free-text brand/model search if productId omitted" },
+        inStockOnly: { type: "boolean", description: "Only return active, in-stock Listings (default false)" },
+        includeUsed: { type: "boolean", description: "Include used-marketplace Listings (default true)" },
+      },
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "getPriceHistory",
+    description:
+      "Price history for one Listing (listingId) or one of the user's Watches (watchId). Returns chronological points plus min/max/latest summary. Price history belongs to Listings, not Products.",
+    parameters: {
+      type: "object",
+      properties: {
+        listingId: { type: "string", description: "Listing UUID" },
+        watchId: { type: "string", description: "Watch UUID from listWatches" },
+        since: { type: "string", description: "ISO date; only points at or after this moment" },
+        limit: { type: "integer", minimum: 1, maximum: 365, description: "Max points, newest kept (default 60)" },
+      },
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "listRetailers",
+    description: "List every retailer domain in the catalog with listing counts and reference-source names.",
+    parameters: {
+      type: "object",
+      properties: {},
       additionalProperties: false,
     },
   },
@@ -219,6 +270,27 @@ export const CHAT_TOOLS: ChatTool[] = [
       additionalProperties: false,
     },
   },
+  {
+    name: CLARIFYING_QUESTION_TOOL_NAME,
+    description:
+      "Ask the user ONE short question when the answer depends on missing info (bike size, year, wheel config, budget, use-case) that no tool can resolve. Ends your turn. Give 2-4 concrete options.",
+    parameters: {
+      type: "object",
+      properties: {
+        question: { type: "string", description: "The single question to ask, in your own voice" },
+        options: {
+          type: "array",
+          items: { type: "string" },
+          minItems: 2,
+          maxItems: 4,
+          description: "2-4 short concrete answers the user can tap",
+        },
+        allowFreeText: { type: "boolean", description: "Whether a typed answer is also fine (default true)" },
+      },
+      required: ["question"],
+      additionalProperties: false,
+    },
+  },
 ];
 
 const WATCH_LIST_QUERY = `select
@@ -268,6 +340,18 @@ export async function executeChatTool(
       return searchProductsTool(args);
     case "getListing":
       return getListingTool(args);
+    case "getProductListings":
+      return getProductListingsTool(args);
+    case "getPriceHistory":
+      return getPriceHistoryTool(args);
+    case "listRetailers":
+      return listRetailersTool();
+    case CLARIFYING_QUESTION_TOOL_NAME:
+      // Valid clarifications are intercepted by chatService and end the turn.
+      // Reaching this means the arguments failed validation.
+      throw new Error(
+        `${CLARIFYING_QUESTION_TOOL_NAME} requires a non-empty question and, if given, 2-4 short options`
+      );
     case "searchReference":
       return searchReferenceTool(args);
     case "fetchReferencePage":
@@ -368,20 +452,204 @@ async function listTasksTool(args: Record<string, unknown>) {
 
 async function searchProductsTool(args: Record<string, unknown>) {
   const query = String(args.query ?? "").trim();
-  if (!query) return [];
+  const categoryParsed = ProductCategorySchema.safeParse(args.category);
+  const category = categoryParsed.success ? categoryParsed.data : null;
+  if (args.category !== undefined && !categoryParsed.success) {
+    throw new Error(`Unknown category "${String(args.category)}". Use one of: ${ProductCategorySchema.options.join(", ")}`);
+  }
+  const modelYear = Number.isInteger(Number(args.modelYear)) && args.modelYear !== undefined ? Number(args.modelYear) : null;
+  if (!query && !category) {
+    throw new Error("searchProducts needs a query or a category");
+  }
   const limit = Math.min(Math.max(Number(args.limit) || 10, 1), 50);
-  const pattern = `%${query.toLowerCase()}%`;
+  const pattern = query ? `%${query.toLowerCase()}%` : null;
   const { rows } = await pool.query(
     `select * from products
-     where lower(brand) like $1 or lower(model) like $1
+     where ($1 is null or lower(brand) like $1 or lower(model) like $1 or lower(brand || ' ' || model) like $1)
+       and ($2 is null or category = $2)
+       and ($3 is null or model_year = $3)
      order by updated_at desc
-     limit $2`,
-    [pattern, limit]
+     limit $4`,
+    [pattern, category, modelYear, limit]
   );
-  return rows.map((row) => ({
-    ...mapProduct(row),
-    specs: parseProductSpecs(row.specs),
-  }));
+  const listingsByProduct = await listProductListings(rows.map((row) => row.id as string));
+  return rows.map((row) => {
+    const listings = listingsByProduct.get(row.id as string) ?? [];
+    return {
+      ...mapProduct(row),
+      specs: parseProductSpecs(row.specs),
+      listingCount: listings.length,
+      activeListingCount: listings.filter((listing) => listing.status === "active").length,
+      cheapestLive: deriveProductPrice(listings),
+    };
+  });
+}
+
+async function getProductListingsTool(args: Record<string, unknown>) {
+  const { row, otherMatches } = await resolveProductRow({
+    productId: typeof args.productId === "string" ? args.productId : undefined,
+    brand: typeof args.brand === "string" ? args.brand : undefined,
+    model: typeof args.model === "string" ? args.model : undefined,
+    query: typeof args.query === "string" ? args.query : undefined,
+    label: "product",
+  });
+  const inStockOnly = args.inStockOnly === true;
+  const includeUsed = args.includeUsed !== false;
+
+  const productId = row.id as string;
+  const all = (await listProductListings([productId])).get(productId) ?? [];
+  // "In stock" only means anything for a Listing that is still active.
+  const listings = all.filter(
+    (listing) =>
+      (!inStockOnly || (listing.inStock && listing.status === "active")) && (includeUsed || !listing.isUsed)
+  );
+
+  return {
+    product: { ...mapProduct(row), specs: parseProductSpecs(row.specs) },
+    otherMatches,
+    derivedPrice: deriveProductPrice(all),
+    listingCount: all.length,
+    listings,
+  };
+}
+
+async function getPriceHistoryTool(args: Record<string, unknown>) {
+  const listingId = typeof args.listingId === "string" && args.listingId.trim() ? args.listingId.trim() : null;
+  const watchId = typeof args.watchId === "string" && args.watchId.trim() ? args.watchId.trim() : null;
+  if ((listingId && watchId) || (!listingId && !watchId)) {
+    throw new Error("getPriceHistory needs exactly one of listingId or watchId");
+  }
+  const since = typeof args.since === "string" && !Number.isNaN(Date.parse(args.since)) ? new Date(args.since).toISOString() : null;
+  const limit = Math.min(Math.max(Number(args.limit) || 60, 1), 365);
+  // SQLite stores scraped_at as ISO text; compare on a normalized form so both "T" and " " separators sort.
+  const sinceClause = since ? `and replace(scraped_at, ' ', 'T') >= $2` : "";
+  const params: unknown[] = since ? [null, since, limit + 1] : [null, limit + 1];
+  const limitParam = since ? "$3" : "$2";
+
+  let rows: Record<string, unknown>[] = [];
+  let target: Record<string, unknown>;
+
+  if (watchId) {
+    const { rows: watchRows } = await pool.query(
+      `select w.*, l.domain, l.title, l.url, p.brand, p.model, p.model_year, lv.label as pinned_variant_label
+       from watches w
+       left join listings l on l.id = w.listing_id
+       left join products p on p.id = coalesce(l.product_id, w.product_id)
+       left join listing_variants lv on lv.id = w.listing_variant_id
+       where w.id = $1 and w.owner_id = $2`,
+      [watchId, LOCAL_OWNER_ID]
+    );
+    const watch = watchRows[0];
+    if (!watch) throw new Error("watch not found");
+    params[0] = watchId;
+    const pinned = watch.variant_selection === "specific" && watch.listing_variant_id;
+    const result = pinned
+      ? await pool.query(
+          `select vpp.id, lv.listing_id, vpp.watch_id, vpp.price, vpp.currency, vpp.in_stock, vpp.scraped_at
+           from variant_price_points vpp
+           join listing_variants lv on lv.id = vpp.variant_id
+           where vpp.watch_id = $1 ${sinceClause}
+           order by vpp.scraped_at desc limit ${limitParam}`,
+          params
+        )
+      : await pool.query(
+          `select * from price_points where watch_id = $1 ${sinceClause} order by scraped_at desc limit ${limitParam}`,
+          params
+        );
+    rows = result.rows;
+    target = {
+      watchId,
+      listingId: watch.listing_id ?? null,
+      displayTitle: watch.display_title ?? null,
+      domain: watch.domain ?? null,
+      title: watch.title ?? null,
+      url: watch.url ?? null,
+      product: watch.brand ? { brand: watch.brand, model: watch.model, modelYear: watch.model_year ?? null } : null,
+      pinnedVariantLabel: pinned ? (watch.pinned_variant_label ?? null) : null,
+    };
+  } else {
+    const { rows: listingRows } = await pool.query(
+      `select l.*, p.brand, p.model, p.model_year
+       from listings l left join products p on p.id = l.product_id
+       where l.id = $1`,
+      [listingId]
+    );
+    const listing = listingRows[0];
+    if (!listing) throw new Error("listing not found");
+    params[0] = listingId;
+    const result = await pool.query(
+      `select * from price_points where listing_id = $1 ${sinceClause} order by scraped_at desc limit ${limitParam}`,
+      params
+    );
+    rows = result.rows;
+    target = {
+      watchId: null,
+      listingId,
+      domain: listing.domain,
+      title: listing.title ?? null,
+      url: listing.url,
+      status: listing.status,
+      product: listing.brand ? { brand: listing.brand, model: listing.model, modelYear: listing.model_year ?? null } : null,
+      pinnedVariantLabel: null,
+    };
+  }
+
+  const truncated = rows.length > limit;
+  const points = rows
+    .slice(0, limit)
+    .map((row) => mapPricePoint(row))
+    .reverse()
+    .map((point) => ({ scrapedAt: point.scrapedAt, price: point.price, inStock: point.inStock }));
+
+  const prices = points.map((point) => point.price).filter((price): price is number => price !== null);
+  const first = points[0] ?? null;
+  const latest = points.at(-1) ?? null;
+  const changePct =
+    first && latest && first.price && latest.price !== null
+      ? Math.round(((latest.price - first.price) / first.price) * 1000) / 10
+      : null;
+
+  return {
+    target,
+    currency: (rows[0]?.currency as string | undefined) ?? null,
+    since,
+    points,
+    summary: {
+      count: points.length,
+      first,
+      latest,
+      min: prices.length ? Math.min(...prices) : null,
+      max: prices.length ? Math.max(...prices) : null,
+      changePct,
+      truncated,
+    },
+  };
+}
+
+async function listRetailersTool() {
+  const { rows } = await pool.query(
+    `select domain,
+            count(*) as listing_count,
+            sum(case when status = 'active' then 1 else 0 end) as active_count,
+            sum(case when is_used = 1 then 1 else 0 end) as used_count,
+            max(last_checked_at) as last_checked_at
+     from listings
+     group by domain
+     order by listing_count desc, domain asc`
+  );
+  return rows.map((row) => {
+    const source = findReferenceSourceByDomain(String(row.domain));
+    return {
+      domain: row.domain,
+      name: source?.name ?? null,
+      sourceId: source?.id ?? null,
+      category: source?.category ?? null,
+      listingCount: Number(row.listing_count),
+      activeListingCount: Number(row.active_count),
+      usedListingCount: Number(row.used_count),
+      lastCheckedAt: toIso((row.last_checked_at as string | null) ?? null),
+    };
+  });
 }
 
 async function getListingTool(args: Record<string, unknown>) {
@@ -421,41 +689,72 @@ async function fetchReferencePageTool(args: Record<string, unknown>) {
   return fetchCatalogReferencePage(url, { section });
 }
 
+interface ProductMatchSummary {
+  id: string;
+  brand: string;
+  model: string;
+  modelYear: number | null;
+  category: string;
+}
+
+/**
+ * Resolves one Product row from an id, brand/model pair, or free-text query.
+ * Returns the best match plus up to four runners-up so the caller (and the
+ * model) can see when the request was ambiguous and ask a Clarification.
+ */
+async function resolveProductRow(args: {
+  productId?: string;
+  brand?: string;
+  model?: string;
+  query?: string;
+  label: string;
+}): Promise<{ row: Record<string, unknown>; otherMatches: ProductMatchSummary[] }> {
+  if (args.productId) {
+    const { rows } = await pool.query("select * from products where id = $1", [args.productId]);
+    const row = rows[0];
+    if (!row) throw new Error(`${args.label}: product not found`);
+    return { row, otherMatches: [] };
+  }
+
+  const brand = args.brand?.trim();
+  const model = args.model?.trim();
+  const query = args.query?.trim();
+  if (!brand && !model && !query) {
+    throw new Error(`${args.label}: provide productId, brand+model, or query`);
+  }
+
+  const { rows } = await pool.query(
+    `select * from products
+     where ($1 is null or lower(brand) like lower($1))
+       and ($2 is null or lower(model) like lower($2))
+       and ($3 is null or lower(brand) like lower($3) or lower(model) like lower($3) or lower(brand || ' ' || model) like lower($3))
+     order by updated_at desc
+     limit 5`,
+    [brand ? `%${brand}%` : null, model ? `%${model}%` : null, query ? `%${query}%` : null]
+  );
+  const row = rows[0];
+  if (!row) {
+    throw new Error(`${args.label}: product not found for ${[brand, model, query].filter(Boolean).join(" ")}`.trim());
+  }
+  return {
+    row,
+    otherMatches: rows.slice(1).map((other) => ({
+      id: other.id as string,
+      brand: other.brand as string,
+      model: other.model as string,
+      modelYear: (other.model_year as number | null) ?? null,
+      category: other.category as string,
+    })),
+  };
+}
+
 async function resolveCompatibilityProduct(args: {
   productId?: string;
   brand?: string;
   model?: string;
   label: string;
 }): Promise<CompatibilityProduct> {
-  if (args.productId) {
-    const { rows } = await pool.query("select * from products where id = $1", [args.productId]);
-    const row = rows[0];
-    if (!row) throw new Error(`${args.label}: product not found`);
-    return {
-      id: row.id as string,
-      brand: row.brand as string,
-      model: row.model as string,
-      category: row.category as ProductCategory,
-      specs: parseProductSpecs(row.specs),
-    };
-  }
-
-  const brand = args.brand?.trim();
-  const model = args.model?.trim();
-  if (!brand && !model) {
-    throw new Error(`${args.label}: provide productId or brand+model`);
-  }
-
-  const { rows } = await pool.query(
-    `select * from products
-     where ($1::text is null or lower(brand) like lower($1))
-       and ($2::text is null or lower(model) like lower($2))
-     order by updated_at desc
-     limit 1`,
-    [brand ? `%${brand}%` : null, model ? `%${model}%` : null]
-  );
-  const row = rows[0];
-  if (!row) throw new Error(`${args.label}: product not found for ${brand ?? ""} ${model ?? ""}`.trim());
+  const { row } = await resolveProductRow(args);
   return {
     id: row.id as string,
     brand: row.brand as string,

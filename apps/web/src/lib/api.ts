@@ -142,6 +142,12 @@ export interface ChatSession {
   updatedAt: string;
 }
 
+export interface ChatToolCall {
+  id: string;
+  name: string;
+  args: Record<string, unknown>;
+}
+
 export interface ChatMessage {
   id: string;
   sessionId: string;
@@ -150,14 +156,26 @@ export interface ChatMessage {
   toolName: string | null;
   toolArgs: Record<string, unknown> | null;
   toolResult: unknown;
+  /** Tool Calls this assistant message issued; null for user/tool rows and plain text replies. */
+  toolCalls?: ChatToolCall[] | null;
   tokenCount: number;
   createdAt: string;
+}
+
+export const CLARIFYING_QUESTION_TOOL_NAME = "askClarifyingQuestion";
+
+export interface ChatClarification {
+  messageId: string;
+  question: string;
+  options?: string[];
+  allowFreeText: boolean;
 }
 
 export interface ChatStreamHandlers {
   onTextDelta?: (delta: string) => void;
   onMessage?: (message: ChatMessage) => void;
   onToolCall?: (toolName: string, toolArgs: Record<string, unknown>) => void;
+  onClarification?: (clarification: ChatClarification) => void;
   onSessionUpdate?: (session: ChatSession) => void;
   onError?: (error: string) => void;
 }
@@ -309,6 +327,14 @@ export const api = {
             String(data.toolName ?? ""),
             (data.toolArgs as Record<string, unknown>) ?? {}
           );
+        }
+        if (eventName === "clarification") {
+          handlers.onClarification?.({
+            messageId: String(data.messageId ?? ""),
+            question: String(data.question ?? ""),
+            options: Array.isArray(data.options) ? (data.options as string[]) : undefined,
+            allowFreeText: data.allowFreeText !== false,
+          });
         }
         if (eventName === "session-update") handlers.onSessionUpdate?.(data.session as ChatSession);
         if (eventName === "error") handlers.onError?.(String(data.error ?? "chat error"));

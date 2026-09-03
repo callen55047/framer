@@ -20,20 +20,18 @@ Default latency budget is **60s per fixture** (see manifest). Reasoning-heavy mo
 
 ## Run a benchmark
 
-Configure inference (LM Studio or Ollama) via env vars documented in [`apps/runner/.env.example`](apps/runner/.env.example).
+Configure LM Studio via env vars documented in [`apps/runner/.env.example`](apps/runner/.env.example).
 
 ```bash
-# Single provider from env
-INFERENCE_PROVIDER=lmstudio \
+# From env (defaults to LM Studio serving google/gemma-4-e2b)
 LM_STUDIO_MODEL=your-model-id \
 npm run benchmark
 
 # Optional: relaxed latency budget for slow local models
 BENCHMARK_MAX_LATENCY_MS=300000 npm run benchmark
-
-# Compare multiple providers in one run
-BENCHMARK_PROVIDERS=ollama,lmstudio npm run benchmark
 ```
+
+`BENCHMARK_PROVIDERS` still accepts a comma-separated list of `InferenceProviderKind` values (currently just `lmstudio`); it's kept for when a second provider is added.
 
 Ephemeral output (not committed):
 
