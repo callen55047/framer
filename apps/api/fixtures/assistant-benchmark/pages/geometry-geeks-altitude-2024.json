@@ -1,0 +1,24 @@
+{
+  "search": {
+    "category": "bike_specs",
+    "queryContains": "altitude",
+    "results": [
+      {
+        "title": "Rocky Mountain Altitude 2024",
+        "url": "https://geometrygeeks.bike/bike/rocky-mountain-altitude-2024/",
+        "sourceId": "geometry-geeks",
+        "sourceName": "Geometry Geeks",
+        "sourceCategory": "bike_specs"
+      }
+    ],
+    "sourcesTried": ["geometry-geeks"],
+    "sourcesSkipped": []
+  },
+  "page": {
+    "url": "https://geometrygeeks.bike/bike/rocky-mountain-altitude-2024/",
+    "excerpt": "Rocky Mountain Altitude 2024 — S | M | L | XL\nReach | 425 | 450 | 475 | 500\nStack | 615 | 625 | 635 | 645\nHead tube angle | 64.3 | 64.3 | 64.3 | 64.3\nChainstay | 435 | 435 | 440 | 440\nWheelbase | 1215 | 1240 | 1265 | 1290",
+    "sourceId": "geometry-geeks",
+    "sourceName": "Geometry Geeks",
+    "sourceCategory": "bike_specs"
+  }
+}

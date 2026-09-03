@@ -24,6 +24,8 @@
     "benchmark": "npm run benchmark --workspace=@framer/runner",
     "benchmark:save-baseline": "npm run benchmark:save-baseline --workspace=@framer/runner",
     "benchmark:compare": "npm run benchmark:compare --workspace=@framer/runner",
+    "benchmark:assistant": "npm run benchmark:assistant --workspace=@framer/api",
+    "benchmark:assistant:save-baseline": "npm run benchmark:assistant:save-baseline --workspace=@framer/api",
     "verify:poc": "npm run verify:poc --workspace=@framer/runner",
     "probe:sources": "tsx scripts/probe-reference-sources.ts",
     "test": "npm run test --workspaces --if-present && npm run test:probe-catalog",

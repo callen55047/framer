@@ -15,6 +15,10 @@ artifacts/*
 apps/runner/fixtures/poc/benchmark-results.json
 apps/runner/fixtures/poc/last-benchmark.md
 
+# Assistant benchmark ephemeral output (committed baselines live under fixtures/assistant-benchmark/baselines/)
+apps/api/fixtures/assistant-benchmark/benchmark-results.json
+apps/api/fixtures/assistant-benchmark/last-benchmark.md
+
 *.tsbuildinfo
 coverage/
 

@@ -403,12 +403,90 @@ describe("chatService", () => {
 
       const session = await createChatSession();
       const events = await collect(sendChatMessage(session.id, "..."));
-      expect(calls).toHaveLength(2);
+      // Call 1: buffered, no tool calls -> no-tool-call retry. Call 2: still
+      // no tool calls, budget not exhausted, empty finalText -> forced
+      // tools-off nudge as call 3.
+      expect(calls).toHaveLength(3);
       expect(events.some((event) => event.event === "error")).toBe(false);
 
       const messages = await loadMessages(server.baseUrl, session.id);
       expect(messages.at(-1)!.role).toBe("assistant");
-      expect(messages.at(-1)!.content).toMatch(/Burned through every lookup/);
+      expect(messages.at(-1)!.content).toMatch(/Ran the lookups/);
+    } finally {
+      await server.close();
+    }
+  });
+
+  it("nudges once and discards the reply when the model skips every tool", async () => {
+    const server = await createTestServer();
+    const { createChatSession, sendChatMessage, setChatProviderForTests } = await import(
+      "../services/chatService.js"
+    );
+    try {
+      const { provider, calls } = createMockProvider((callNumber) =>
+        callNumber === 1
+          ? [text("Give me a UUID."), done]
+          : [text("Not a bike question."), done]
+      );
+      setChatProviderForTests(provider);
+
+      const session = await createChatSession();
+      const events = await collect(sendChatMessage(session.id, "hi"));
+      const deltas = events.filter((event) => event.event === "text-delta").map((event) => event.data.delta);
+
+      // The discarded first attempt never reaches the SSE stream.
+      expect(deltas.join("")).toBe("Not a bike question.");
+      expect(calls).toHaveLength(2);
+      expect(String(calls[1]!.messages.at(-1)!.content)).toMatch(/answered without looking anything up/);
+
+      const messages = await loadMessages(server.baseUrl, session.id);
+      // The discarded reply is never persisted either.
+      expect(messages.some((message) => message.content === "Give me a UUID.")).toBe(false);
+      expect(messages.at(-1)!.content).toBe("Not a bike question.");
+    } finally {
+      await server.close();
+    }
+  });
+
+  it("does not nudge when the first attempt already calls a tool", async () => {
+    const server = await createTestServer();
+    const { createChatSession, sendChatMessage, setChatProviderForTests } = await import(
+      "../services/chatService.js"
+    );
+    try {
+      const { provider, calls } = createMockProvider((callNumber) =>
+        callNumber === 1 ? [toolCall("listWatches"), done] : [text("No watches."), done]
+      );
+      setChatProviderForTests(provider);
+
+      const session = await createChatSession();
+      await collect(sendChatMessage(session.id, "What am I watching?"));
+
+      expect(calls).toHaveLength(2);
+      expect(calls[1]!.messages.some((message) => String(message.content).includes("answered without looking"))).toBe(
+        false
+      );
+    } finally {
+      await server.close();
+    }
+  });
+
+  it("does not nudge when the first attempt is a clarification", async () => {
+    const server = await createTestServer();
+    const { createChatSession, sendChatMessage, setChatProviderForTests } = await import(
+      "../services/chatService.js"
+    );
+    try {
+      const { provider, calls } = createMockProvider(() => [
+        toolCall("askClarifyingQuestion", { question: "Which one?", options: ["A", "B"] }),
+        done,
+      ]);
+      setChatProviderForTests(provider);
+
+      const session = await createChatSession();
+      const events = await collect(sendChatMessage(session.id, "What stem fits my bike?"));
+      expect(events.some((event) => event.event === "clarification")).toBe(true);
+      expect(calls).toHaveLength(1);
     } finally {
       await server.close();
     }

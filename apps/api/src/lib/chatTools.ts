@@ -20,6 +20,33 @@ import {
   fetchCatalogReferencePage,
   searchReferenceCategory,
 } from "@framer/runner/lib/referenceSearch.js";
+
+/**
+ * Seam over the two reference-lookup functions chat tools call. Swapped out
+ * by the Assistant Benchmark to replay recorded pages/search results from
+ * disk instead of hitting the live network, so only the model stays live.
+ * Mirrors the provider seam in chatService.ts (getChatProvider /
+ * setChatProviderForTests / resetChatProviderForTests).
+ */
+type ReferenceAdapter = {
+  searchReferenceCategory: typeof searchReferenceCategory;
+  fetchCatalogReferencePage: typeof fetchCatalogReferencePage;
+};
+
+const defaultReferenceAdapter: ReferenceAdapter = {
+  searchReferenceCategory,
+  fetchCatalogReferencePage,
+};
+
+let referenceAdapter: ReferenceAdapter = defaultReferenceAdapter;
+
+export function setReferenceAdapterForTests(adapter: Partial<ReferenceAdapter>): void {
+  referenceAdapter = { ...defaultReferenceAdapter, ...adapter };
+}
+
+export function resetReferenceAdapterForTests(): void {
+  referenceAdapter = defaultReferenceAdapter;
+}
 import { dbClient } from "../db/client.js";
 import { pool } from "../db/pool.js";
 import { createTaskWithLinearJobs } from "./createTaskChain.js";
@@ -679,14 +706,14 @@ async function searchReferenceTool(args: Record<string, unknown>) {
   const category = String(args.category ?? "");
   const query = String(args.query ?? "");
   const limit = Math.min(Math.max(Number(args.limit) || 5, 1), 10);
-  return searchReferenceCategory(category, query, limit);
+  return referenceAdapter.searchReferenceCategory(category, query, limit);
 }
 
 async function fetchReferencePageTool(args: Record<string, unknown>) {
   const url = String(args.url ?? "").trim();
   if (!url) throw new Error("url is required");
   const section = typeof args.section === "string" ? args.section : undefined;
-  return fetchCatalogReferencePage(url, { section });
+  return referenceAdapter.fetchCatalogReferencePage(url, { section });
 }
 
 interface ProductMatchSummary {

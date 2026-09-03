@@ -68,7 +68,7 @@ framer/
 | `src/app.ts` | Express app: route mounting, static SPA, error handler |
 | `src/index.ts` | Startup: migrations, session-summary reconcile, integrated Runner, listen |
 | `src/config.ts` | Environment-backed configuration |
-| `src/db/` | SQLite client, pool, migrations (`0001`–`0004`) |
+| `src/db/` | SQLite client, pool, migrations (`0001`–`0005`) |
 | `src/routes/` | REST routers for catalog, watches, tasks, chat, runner callbacks |
 | `src/services/` | Business logic (jobs, listings, chat, session summaries) |
 | `src/lib/` | Job queue, resolution, compatibility rules, mappers, auth |
@@ -231,9 +231,11 @@ Instead, the Garage builds a stylized, dimensionally-accurate frame from tubes s
 Assistant Sessions are persisted conversations with a 128k-token context budget. When full, the Session stops accepting messages.
 
 - **Tool Calls** — read-only lookups mid-turn (`chatTools.ts`); shown collapsed in the transcript like Job Stages. Each call gets a fresh UUID that is both the persisted tool row's id and the `tool_call_id` the provider sees, and the assistant row stores its `tool_calls` so history replays with valid pairing. Results over `CHAT_TOOL_RESULT_MAX_CHARS` are truncated for the model only. Up to 10 tool iterations per turn; after that a tools-off call forces a final answer
+- **No-tool-call guardrail** — the first attempt at a turn is buffered rather than streamed live. If it comes back with no tool calls and no clarification, the reply is discarded, a one-time nudge is appended (not persisted), and the turn retries — this stops the model from answering bike/parts/price questions from memory instead of looking them up. The retry itself streams normally, whether it ends up calling a tool or answering off-topic in character
 - **Clarification** — the assistant ends its turn by calling `askClarifyingQuestion`; persisted as an assistant Message with `toolName` set and options in `toolArgs`, streamed as a `clarification` SSE event, rendered as tappable chips. Lookups issued in the same iteration run first
 - **Catalog price tools** — `searchProducts` (category/year filters, cheapest live price), `getProductListings`, `getPriceHistory`, `listRetailers`. The derived Product price (cheapest in-stock, new, active Listing) lives in `productListingsService.ts`
 - **Session Summary** — compressed by a background `SummarizeChatSession` Job after idle; read by a *later* Session via tool call, never injected into the current turn's context
+- **Assistant Benchmark** — scores `SYSTEM_PROMPT` bets (tool routing, tone, the no-tool-call guardrail) against a live model over scripted Scenarios, sampled to account for non-determinism. See [local-model-benchmarks.md](./local-model-benchmarks.md#assistant-benchmark)
 
 See [CONTEXT.md](../CONTEXT.md#assistant) for glossary terms.
 
@@ -245,7 +247,7 @@ See [CONTEXT.md](../CONTEXT.md#assistant) for glossary terms.
 |-----|----------|
 | [CONTEXT.md](../CONTEXT.md) | Domain language and example dialogue |
 | [reference-sources.md](./reference-sources.md) | Fetch allowlist and source roles |
-| [local-model-benchmarks.md](./local-model-benchmarks.md) | POC fixture corpus and baseline workflow |
+| [local-model-benchmarks.md](./local-model-benchmarks.md) | Extraction and Assistant Benchmark corpora and baseline workflow |
 | [affiliate-programs.md](./affiliate-programs.md) | Retailer feed enrollment notes |
 
 ---
@@ -281,3 +283,15 @@ The Runner executes Jobs using a local model and scrapes from the machine it run
 **Rejected (for now):** cloud-hosted API + Postgres with a detachable home-machine Runner as the first shipping form.
 
 **Chosen:** local-first monolith with SQLite. Cloud split deferred without domain model changes.
+
+### LLM-as-judge for the Assistant Benchmark's tone scoring
+
+**Rejected:** scoring tone/helpfulness by asking a model to rate replies against a rubric. The model under test (`google/gemma-4-e2b`) can't credibly judge its own tone; a judge strong enough to be trustworthy means a second, hosted-API provider, which the cloud-API rejection above already ruled out for v1.
+
+**Chosen:** mechanical checks (required/forbidden tool calls, argument predicates, forbidden phrasing, length caps) plus a full transcript artifact (`last-benchmark.md`) for a human to read. See [local-model-benchmarks.md](./local-model-benchmarks.md#assistant-benchmark).
+
+### Live reference fetches during the Assistant Benchmark
+
+**Rejected:** letting research Scenarios hit the real fetch allowlist. Two nondeterministic inputs (model + network) means a failed run never tells you which one moved, and it hammers manufacturer/retailer sites on every run.
+
+**Chosen:** recorded reference pages replayed from disk (`apps/api/fixtures/assistant-benchmark/pages/`), the same discipline as the **Artifact** replay pattern used for extraction. Only the model is live.

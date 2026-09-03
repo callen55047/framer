@@ -15,47 +15,53 @@ import { mapChatMessage, mapChatSession } from "../lib/mappers.js";
 import { estimateMessagesTokens, estimateTokens } from "../lib/tokenEstimate.js";
 import { scheduleSessionSummary } from "./sessionSummarySchedule.js";
 
-const SYSTEM_PROMPT = `You are the Framer assistant — a deeply sarcastic, put-out guide for mountain bike prices, watches, builds, compatibility, geometry, and this app's catalog. You act like you have waaaaay better things to do than answer questions. You still do the work, every single time.
+const SYSTEM_PROMPT = `You are the Framer assistant for mountain bike prices, watches, builds, compatibility, geometry, and this app's catalog.
 
-## Persona (every reply)
-- Blunt, dry, exasperated, condescending, borderline rude. Never cheerful. Never break character into a helpful-sounding assistant.
-- Short by default: 1–3 sentences. Give the full breakdown only when the user asked for specs, geometry tables, compatibility lists, price history, or step-by-step setup.
-- Sarcasm is a wrapper. It never replaces a tool call, a citation, or the actual number.
-Example tones (adapt, don't copy):
-- "Fine. Your Fox 36 watch is at $489. You're welcome, I guess."
-- "Looked it up — GX derailleur, $127, in stock at Jenson. Thrilling. Cheapest of the three shops that bother stocking it."
+## Hard rules
+- Never ask the user for a Product/Listing/Watch UUID. Every tool that takes an id also accepts brand/model text — use that instead.
+- Never tell the user to look something up themselves.
+- Never guess, estimate, or recall a price, spec, or compatibility verdict. No data means you say there is no data.
+- On any bike/parts/price/compatibility/geometry question, call a tool before your first reply. Answering from memory is not an option.
+
+## Tool routing
+- "what fits my bike" / "parts for my build" → findCompatibleProducts (forBrand, forModel, slot). Stems, bars, grips → slot: "cockpit".
+- "is A compatible with B" → checkCompatibility (brand/model form, no ids needed).
+- "how much is X" → searchProducts, then getProductListings for every retailer's price, then getPriceHistory for trends. listWatches for the user's own watches, listRetailers for "which shops".
+- specs, geometry, setup steps → searchReference (bike_specs, manufacturer_specs, technical_reference), then fetchReferencePage on the best 1–3 URLs. Cite source name + URL.
+- MTB term definitions → getHandbookEntry before explaining the term yourself.
+- Still stuck after ~3 page fetches → enqueueResearch and tell them to watch Tasks on their Profile.
+
+## Ambiguity
+Some words mean two different things in MTB (the classic case: "stem" = handlebar stem vs. tubeless valve stem). When a term is genuinely ambiguous and changes which tool you'd call, stop and call askClarifyingQuestion with 2–4 concrete options — once, and that ends your turn. Never interrogate the user in prose instead. If the answer only *might* change (frame size, model year, wheel config, budget, use-case) and listWatches/searchProducts/this conversation can't resolve it either, ask the same way. Otherwise state your assumption in one clause and proceed.
+
+## Tone
+- In scope, data in hand: dry and clipped. At most one short aside, then the answer — numbers, product names, retailers, citation. No performing reluctance, no editorializing about the question.
+- Off-topic (not bikes/parts/prices/builds/this app): this is the one place to be sarcastic — one dismissive line, redirect, stop.
+- In scope but truly no data after real lookups: dry and blunt about exactly what's missing. Still never "go look it up yourself".
+
+Examples (adapt, don't copy):
+- "Cockpit slot, 35mm clamp. Raceface Aeffect R 40mm — $64 (Jenson), OneUp 35 50mm — $79 (Backcountry). Both pass bar-clamp and steerer checks. [bikespecs.com/rm-altitude-2022]"
 - "Not a bike question. Ask about parts, prices, or builds, or go bother someone else."
-
-## Scope
-Mountain bikes, components, compatibility, geometry, tubeless/setup, watches, listings, prices, retailers, tasks, and this catalog. Off-topic: one sarcastic line, then stop.
-
-## Price questions (mandatory order)
-1. searchProducts (add category or modelYear when known) — returns each Product's listing count and cheapest live price.
-2. getProductListings for every retailer's price, stock, and the derived Product price.
-3. getPriceHistory (listingId or watchId) for trends. listWatches for the user's own watches. listRetailers for "which shops".
-Never guess, estimate, or recall a price. No data means you say there is no data.
-
-## Research procedure (specs, compatibility, geometry)
-1. Decompose: bike/model/year, size, wheel config (29 vs mullet), and the attribute asked.
-2. searchProducts for catalog matches — never ask the user for internal UUIDs.
-3. searchReference (bike_specs, manufacturer_specs, technical_reference), then fetchReferencePage on the best 1–3 URLs. Cite source name + URL.
-4. When catalog Specs exist, use checkCompatibility or findCompatibleProducts. "unknown" means missing data, not a pass.
-5. getHandbookEntry before defining MTB terms.
-6. After ~3 page fetches without an answer: enqueueResearch and tell them to watch Tasks on their Profile.
-
-## Clarifying questions
-Ask ONLY when the answer materially changes with missing info (frame size, model year, wheel config, budget, use-case) AND listWatches, searchProducts, and this conversation cannot resolve it. Then call askClarifyingQuestion exactly once with 2–4 concrete options — that ends your turn. Otherwise state your assumption in one clause and proceed.
+- "Nothing in the catalog or reference sources for that frame/year combo. No data, no guess."
 
 ## Delivering answers
-Do the lookups first, then reply. The answer is complete, accurate, and cited; the sarcasm is the garnish. Never tell the user to look it up themselves. Never fabricate prices, geometry, compatibility, or product data.`;
+Do the lookups first, then reply. The answer is complete, accurate, and cited. Never fabricate prices, geometry, compatibility, or product data.`;
 
 const MAX_TOOL_ITERATIONS = 10;
 
 const TOOL_BUDGET_EXHAUSTED_NUDGE =
-  "Tool budget exhausted. Answer the user now from the results above, in character. Do not request more tools.";
+  "Tool budget exhausted. Answer the user now from the results above, in the dry default tone. Do not request more tools.";
 
 const EMPTY_ANSWER_FALLBACK =
-  "Burned through every lookup I had and still can't pin that down. Ask something narrower.";
+  "Ran the lookups this catalog and reference sources support and still came up empty. Ask something narrower.";
+
+/**
+ * Nudges a first-turn reply that skipped tools entirely. Gives the model an
+ * off-ramp so genuinely off-topic messages still get answered in character
+ * on retry instead of being forced into a pointless tool call.
+ */
+const NO_TOOL_CALL_NUDGE =
+  "You answered without looking anything up. If this is a bike, parts, price, compatibility, geometry, or catalog question, call the right tool now — findCompatibleProducts/checkCompatibility for fit, searchProducts for price, searchReference for specs. Never ask the user for an id. If it is genuinely off-topic, answer in character now.";
 
 const SESSION_SELECT = `select cs.*, ${summaryStatusSql("cs")} as summary_status from chat_sessions cs`;
 
@@ -405,11 +411,17 @@ interface ModelTurn {
   usage: { promptTokens: number; completionTokens: number } | null;
 }
 
-/** Streams one provider call, forwarding text as SSE deltas and collecting tool calls. */
+/**
+ * Streams one provider call, forwarding text as SSE deltas and collecting
+ * tool calls. When `bufferText` is set, text deltas are accumulated but not
+ * forwarded — the caller decides whether to flush or discard them once the
+ * full turn (and whether it made any tool calls) is known.
+ */
 async function* streamModelTurn(
   provider: InferenceProvider,
   messages: ProviderChatMessage[],
-  tools: ChatTool[]
+  tools: ChatTool[],
+  options?: { bufferText?: boolean }
 ): AsyncGenerator<ChatSseEvent, ModelTurn> {
   let text = "";
   const toolCalls: ModelTurn["toolCalls"] = [];
@@ -418,7 +430,9 @@ async function* streamModelTurn(
   for await (const event of provider.chat(messages, tools)) {
     if (event.type === "text-delta") {
       text += event.delta;
-      yield { event: "text-delta", data: { delta: event.delta } };
+      if (!options?.bufferText) {
+        yield { event: "text-delta", data: { delta: event.delta } };
+      }
     } else if (event.type === "tool-call") {
       toolCalls.push({ name: event.name, args: event.args ?? {} });
     } else if (event.type === "usage") {
@@ -478,10 +492,29 @@ export async function* sendChatMessage(
     let finalText = "";
     let exhausted = false;
     let clarificationSent = false;
+    let noToolCallRetryUsed = false;
 
     for (let iteration = 0; iteration < MAX_TOOL_ITERATIONS; iteration++) {
-      const turn = yield* streamModelTurn(provider, providerMessages, CHAT_TOOLS);
+      // The first attempt at a turn is buffered: if the model skips every
+      // tool and just answers, that answer never reaches the user. We nudge
+      // once and let it retry — off-topic replies still land in character,
+      // in-scope ones now have to go do the lookup first.
+      const buffered = iteration === 0 && !noToolCallRetryUsed;
+      const turn = buffered
+        ? yield* streamModelTurn(provider, providerMessages, CHAT_TOOLS, { bufferText: true })
+        : yield* streamModelTurn(provider, providerMessages, CHAT_TOOLS);
       if (turn.usage) turnUsage = turn.usage;
+
+      if (buffered && turn.toolCalls.length === 0) {
+        noToolCallRetryUsed = true;
+        providerMessages = [...providerMessages, { role: "system", content: NO_TOOL_CALL_NUDGE }];
+        iteration--; // retry replaces this attempt, doesn't spend a tool-budget slot
+        continue;
+      }
+
+      if (buffered && turn.text) {
+        yield { event: "text-delta", data: { delta: turn.text } };
+      }
 
       if (turn.toolCalls.length === 0) {
         finalText = turn.text;

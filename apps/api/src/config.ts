@@ -38,6 +38,8 @@ export const config = {
     inferenceModel: process.env.INFERENCE_MODEL,
     lmStudioBaseUrl: env("LM_STUDIO_BASE_URL", DEFAULT_LM_STUDIO_BASE_URL),
     lmStudioModel: process.env.LM_STUDIO_MODEL,
+    /** Sampling temperature for assistant chat turns; mirrored into process.env for the runner's env-only loader. */
+    chatTemperature: process.env.INFERENCE_CHAT_TEMPERATURE,
     fetchPoolConcurrency: Number(env("FETCH_POOL_CONCURRENCY", "4")),
     fetchPoolMinIntervalPerDomainMs: Number(env("FETCH_POOL_MIN_INTERVAL_PER_DOMAIN_MS", "2000")),
     inferencePoolDepth: Number(env("INFERENCE_POOL_DEPTH", "1")),

@@ -25,4 +25,9 @@ export function applyRunnerInferenceEnv(): void {
   } else {
     delete process.env.LM_STUDIO_MODEL;
   }
+  if (config.runner.chatTemperature) {
+    process.env.INFERENCE_CHAT_TEMPERATURE = config.runner.chatTemperature;
+  } else {
+    delete process.env.INFERENCE_CHAT_TEMPERATURE;
+  }
 }

@@ -88,6 +88,14 @@ _Avoid_: Cron, schedule, poller
 A known website in the project's fetch inventory — manufacturer spec pages, retailers, compatibility databases, or review sites — each with a category and allowed job kinds. The Runner may warn or block fetches to domains outside this registry depending on configuration. Riders browse the same catalog in the **Handbook** Sources section. See `docs/reference-sources.md`.
 _Avoid_: Trusted source, whitelist entry
 
+**Benchmark**:
+A scored run of a live local model over a fixed corpus, gated on quality and latency and compared against committed per-model baselines. Two exist: the *Extraction* Benchmark over recorded page **Artifacts**, and the *Assistant* Benchmark over **Scenarios**. Mock runs never qualify as a baseline. See `docs/local-model-benchmarks.md`.
+_Avoid_: Eval, integration test, regression suite
+
+**Scenario**:
+One named case in the Assistant **Benchmark** — an ordered list of user **Messages** against a single **Assistant Session**, each turn declaring which **Tool Calls** must and must not occur and what the reply must contain. Sampled several times because the model is not deterministic; scored as a pass rate, not a boolean.
+_Avoid_: Test case, prompt, fixture
+
 ### Assistant
 
 **Assistant Session**:

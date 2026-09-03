@@ -10,6 +10,9 @@
     "start": "node dist/index.js",
     "migrate": "tsx src/db/migrate.ts",
     "verify:queue": "tsx scripts/verify-job-queue.ts",
+    "benchmark:assistant": "tsx scripts/assistant-benchmark.ts",
+    "benchmark:assistant:save-baseline": "tsx scripts/save-assistant-baseline.ts",
+    "benchmark:assistant:record-pages": "tsx scripts/record-reference-pages.ts",
     "test": "vitest run",
     "typecheck": "tsc -b --noEmit false"
   },
