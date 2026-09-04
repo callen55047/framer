@@ -64,7 +64,7 @@ export function HandbookEntryPage() {
           annotation={entry.annotation}
           interactive={entry.diagram !== null}
           alt={entry.label}
-          className="h-48 w-full"
+          className="aspect-[2/1] w-full"
         />
       </div>
 

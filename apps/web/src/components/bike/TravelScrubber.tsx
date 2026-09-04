@@ -1,4 +1,4 @@
-import { REFERENCE_TRAIL_BIKE } from "@framer/schema/browser";
+import { REFERENCE_TRAIL_BIKE, sagTravelMm } from "@framer/schema/browser";
 
 interface TravelScrubberProps {
   travelMm: number;
@@ -7,6 +7,7 @@ interface TravelScrubberProps {
 
 export function TravelScrubber({ travelMm, onChange }: TravelScrubberProps) {
   const maxTravel = REFERENCE_TRAIL_BIKE.linkage.travelMm;
+  const sag = Math.round(sagTravelMm(REFERENCE_TRAIL_BIKE));
 
   return (
     <div className="mt-4 space-y-2">
@@ -25,8 +26,9 @@ export function TravelScrubber({ travelMm, onChange }: TravelScrubberProps) {
         aria-label="Suspension travel"
       />
       <div className="flex justify-between text-[10px] text-neutral-600">
-        <span>Sag</span>
-        <span>Full travel</span>
+        <span>Top-out</span>
+        <span>Sag ≈ {sag} mm</span>
+        <span>Bottom-out</span>
       </div>
     </div>
   );

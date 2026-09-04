@@ -8,15 +8,13 @@ import {
   ReachAnnotation,
   SeatTubeAngleAnnotation,
   StackAnnotation,
+  SuspensionTravelAnnotation,
   WheelSizeAnnotation,
   WheelbaseAnnotation,
 } from "./annotations.js";
-import type { FramePoints, Point2D } from "@framer/schema/browser";
+import type { AnnotationProps } from "./projection.js";
 
-type AnnotationComponent = ComponentType<{
-  pts: FramePoints;
-  project: (p: Point2D) => Point2D;
-}>;
+type AnnotationComponent = ComponentType<AnnotationProps>;
 
 export const ANNOTATION_REGISTRY: Record<string, AnnotationComponent> = {
   reach: ReachAnnotation,
@@ -29,6 +27,7 @@ export const ANNOTATION_REGISTRY: Record<string, AnnotationComponent> = {
   "head-tube-angle": HeadTubeAngleAnnotation,
   "seat-tube-angle": SeatTubeAngleAnnotation,
   "anti-squat": AntiSquatAnnotation,
+  "suspension-travel": SuspensionTravelAnnotation,
 };
 
 export const INTERACTIVE_DIAGRAMS = new Set(["suspension-travel", "anti-squat"]);

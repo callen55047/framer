@@ -1,15 +1,15 @@
-import { sampleAxlePath, REFERENCE_TRAIL_BIKE } from "@framer/schema/browser";
-import { getGeometryBounds, projectToViewBox, DEFAULT_VIEWBOX } from "@framer/schema/browser";
+import { sampleAxlePath, REFERENCE_TRAIL_BIKE, type FramePoints, type Point2D } from "@framer/schema/browser";
 import { ANNOTATION_STROKE, ANNOTATION_FILL } from "./projection.js";
 
 interface AxlePathOverlayProps {
-  className?: string;
+  pts: FramePoints;
+  project: (p: Point2D) => Point2D;
 }
 
-export function AxlePathOverlay({ className }: AxlePathOverlayProps) {
+/** Renders inside the shared bike `<svg>` — no separate SVG, no `<defs>` marker ids. */
+export function AxlePathOverlay({ project }: AxlePathOverlayProps) {
   const path = sampleAxlePath(REFERENCE_TRAIL_BIKE, 24);
-  const bounds = getGeometryBounds(REFERENCE_TRAIL_BIKE);
-  const projected = path.map((p) => projectToViewBox(p, bounds, DEFAULT_VIEWBOX));
+  const projected = path.map((p) => project(p));
 
   const points = projected.map((p) => `${p.x},${p.y}`).join(" ");
 
@@ -19,22 +19,24 @@ export function AxlePathOverlay({ className }: AxlePathOverlayProps) {
 
   const dx = last.x - prev.x;
   const dy = last.y - prev.y;
-  const len = Math.sqrt(dx * dx + dy * dy);
-  const arrowX = last.x + (dx / len) * 12;
-  const arrowY = last.y + (dy / len) * 12;
+  const len = Math.sqrt(dx * dx + dy * dy) || 1;
+  const ux = dx / len;
+  const uy = dy / len;
+  const tipX = last.x + ux * 10;
+  const tipY = last.y + uy * 10;
+  const perpX = -uy * 4;
+  const perpY = ux * 4;
 
   return (
-    <svg viewBox={`0 0 ${DEFAULT_VIEWBOX.width} ${DEFAULT_VIEWBOX.height}`} className={className} fill="none" aria-hidden>
+    <g>
       <polyline points={points} stroke={ANNOTATION_STROKE} strokeWidth={2} strokeDasharray="6 4" fill="none" />
-      <line x1={last.x} y1={last.y} x2={arrowX} y2={arrowY} stroke={ANNOTATION_STROKE} strokeWidth={2} markerEnd="url(#arrow)" />
-      <defs>
-        <marker id="arrow" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
-          <path d="M0,0 L6,3 L0,6 Z" fill={ANNOTATION_STROKE} />
-        </marker>
-      </defs>
-      <text x={last.x + 10} y={last.y - 8} fill={ANNOTATION_FILL} fontSize={10} fontFamily="system-ui,sans-serif">
+      <polygon
+        points={`${tipX},${tipY} ${last.x - perpX},${last.y - perpY} ${last.x + perpX},${last.y + perpY}`}
+        fill={ANNOTATION_STROKE}
+      />
+      <text x={last.x + 10} y={last.y - 8} fill={ANNOTATION_FILL} fontSize={11} fontFamily="system-ui,sans-serif">
         Axle path
       </text>
-    </svg>
+    </g>
   );
 }

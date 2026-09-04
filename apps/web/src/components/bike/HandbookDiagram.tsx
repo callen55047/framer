@@ -23,29 +23,25 @@ export function HandbookDiagram({
 }: HandbookDiagramProps) {
   const [travelMm, setTravelMm] = useState(0);
   const effectiveTravel = interactive && INTERACTIVE_DIAGRAMS.has(diagramId) ? travelMm : 0;
-  const { pts, project, viewBox } = useProjectedFrame(effectiveTravel);
+  const { pts, project, viewBox, viewBoxConfig } = useProjectedFrame(effectiveTravel);
 
   const annId = annotationId ?? diagramId;
   const Annotation = ANNOTATION_REGISTRY[annId];
 
-  const showTravelExtras = interactive && diagramId === "suspension-travel";
-  const showAntiSquatExtras = interactive && diagramId === "anti-squat";
+  const showAxlePath = interactive && diagramId === "suspension-travel";
+  const showLeverageChart = interactive && (diagramId === "suspension-travel" || diagramId === "anti-squat");
 
   return (
     <div className="flex flex-col">
       <div className={`relative ${className}`} role="img" aria-label={alt}>
         <svg viewBox={viewBox} className="h-full w-full" fill="none">
           <BikeFrame travelMm={effectiveTravel} />
-          {Annotation ? <Annotation pts={pts} project={project} /> : null}
+          {showAxlePath ? <AxlePathOverlay pts={pts} project={project} /> : null}
+          {Annotation ? <Annotation pts={pts} project={project} viewBox={viewBoxConfig} travelMm={effectiveTravel} /> : null}
         </svg>
-        {showTravelExtras ? (
-          <div className="pointer-events-none absolute inset-0">
-            <AxlePathOverlay className="h-full w-full" />
-          </div>
-        ) : null}
       </div>
 
-      {showTravelExtras || showAntiSquatExtras ? <LeverageCurveChart className="mt-4" /> : null}
+      {showLeverageChart ? <LeverageCurveChart travelMm={effectiveTravel} className="mt-4" /> : null}
 
       {interactive && INTERACTIVE_DIAGRAMS.has(diagramId) ? (
         <TravelScrubber travelMm={travelMm} onChange={setTravelMm} />
