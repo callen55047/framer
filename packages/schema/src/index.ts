@@ -18,3 +18,4 @@ export * from "./bikeConfig.js";
 export * from "./bikeGeometry.js";
 export * from "./variant.js";
 export * from "./chat.js";
+export * from "./fieldNote.js";

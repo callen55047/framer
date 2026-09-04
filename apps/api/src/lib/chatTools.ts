@@ -2,6 +2,8 @@ import {
   BUILD_SLOT_TO_CATEGORY,
   BuildSlotSchema,
   CLARIFYING_QUESTION_TOOL_NAME,
+  CreateFieldNoteInputSchema,
+  FieldNoteSearchInputSchema,
   LOCAL_OWNER_ID,
   ProductCategorySchema,
   ReferenceSourceCategorySchema,
@@ -20,6 +22,7 @@ import {
   fetchCatalogReferencePage,
   searchReferenceCategory,
 } from "@framer/runner/lib/referenceSearch.js";
+import { createFieldNote, getFieldNote, searchFieldNotes } from "../services/fieldNoteService.js";
 
 /**
  * Seam over the two reference-lookup functions chat tools call. Swapped out
@@ -298,6 +301,61 @@ export const CHAT_TOOLS: ChatTool[] = [
     },
   },
   {
+    name: "searchFieldNotes",
+    description:
+      "Search the rider's own Field Notes — their recorded first-hand experience with specific bikes and parts (symptoms, causes, fixes). Call this before reference lookups for any troubleshooting, setup, or 'has this happened before' question about a bike the rider owns.",
+    parameters: {
+      type: "object",
+      properties: {
+        query: {
+          type: "string",
+          description: "Free-text search over title, body, symptom, cause, and resolution",
+        },
+        brand: { type: "string", description: "Filter by bike/part brand" },
+        model: { type: "string", description: "Filter by bike/part model" },
+        modelYear: { type: "integer", minimum: 1990, maximum: 2100, description: "Filter by model year" },
+        tag: { type: "string", description: "Filter by a single tag" },
+        limit: { type: "integer", minimum: 1, maximum: 20, description: "Max notes to return (default 10)" },
+      },
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "getFieldNote",
+    description:
+      "Retrieve one Field Note in full by id, including its markdown body. Use after searchFieldNotes when a result looks relevant and you need the detail.",
+    parameters: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Field Note id from a prior searchFieldNotes result" },
+      },
+      required: ["id"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "createFieldNote",
+    description:
+      "Save a DRAFT Field Note recording something the rider has just told you they learned or fixed. Only call this when the rider explicitly asks to record, save, or note something down. The draft is invisible until the rider confirms it in the Notes tab — never claim the note is saved, say it is waiting for their review.",
+    parameters: {
+      type: "object",
+      properties: {
+        title: { type: "string", description: "Short title for the note" },
+        body: { type: "string", description: "The full story, in the rider's own words where possible" },
+        symptom: { type: "string", description: "What was observed going wrong" },
+        cause: { type: "string", description: "Why it was happening" },
+        resolution: { type: "string", description: "What fixed it" },
+        brand: { type: "string", description: "Bike/part brand this note applies to" },
+        model: { type: "string", description: "Bike/part model this note applies to" },
+        modelYearFrom: { type: "integer", description: "First model year this note applies to" },
+        modelYearTo: { type: "integer", description: "Last model year this note applies to" },
+        tags: { type: "array", items: { type: "string" }, description: "Short freeform tags" },
+      },
+      required: ["title", "body"],
+      additionalProperties: false,
+    },
+  },
+  {
     name: CLARIFYING_QUESTION_TOOL_NAME,
     description:
       "Ask the user ONE short question when the answer depends on missing info (bike size, year, wheel config, budget, use-case) that no tool can resolve. Ends your turn. Give 2-4 concrete options.",
@@ -395,6 +453,12 @@ export async function executeChatTool(
       return getSessionSummaryTool(args, context);
     case "getHandbookEntry":
       return getHandbookEntryTool(args);
+    case "searchFieldNotes":
+      return searchFieldNotesTool(args);
+    case "getFieldNote":
+      return getFieldNoteTool(args);
+    case "createFieldNote":
+      return createFieldNoteTool(args, context);
     default:
       throw new Error(`Unknown tool: ${name}`);
   }
@@ -947,6 +1011,53 @@ async function getHandbookEntryTool(args: Record<string, unknown>) {
     diagram: handbookDiagramId(entry.illustration),
     annotation: handbookAnnotationId(entry.illustration),
     sourceIds: entry.sourceIds ?? [],
+  };
+}
+
+async function searchFieldNotesTool(args: Record<string, unknown>) {
+  const parsed = FieldNoteSearchInputSchema.safeParse(args);
+  if (!parsed.success) {
+    throw new Error(`invalid searchFieldNotes arguments: ${parsed.error.message}`);
+  }
+  const results = await searchFieldNotes(LOCAL_OWNER_ID, parsed.data);
+  return {
+    notes: results.map((note) => ({
+      id: note.id,
+      title: note.title,
+      symptom: note.symptom,
+      cause: note.cause,
+      resolution: note.resolution,
+      brand: note.brand,
+      model: note.model,
+      modelYearFrom: note.modelYearFrom,
+      modelYearTo: note.modelYearTo,
+      tags: note.tags,
+    })),
+  };
+}
+
+async function getFieldNoteTool(args: Record<string, unknown>) {
+  const id = typeof args.id === "string" ? args.id : "";
+  if (!id) throw new Error("getFieldNote requires an id");
+  const note = await getFieldNote(LOCAL_OWNER_ID, id);
+  if (!note) throw new Error(`Field Note not found: ${id}`);
+  return note;
+}
+
+async function createFieldNoteTool(args: Record<string, unknown>, context: ChatToolContext) {
+  const parsed = CreateFieldNoteInputSchema.safeParse(args);
+  if (!parsed.success) {
+    throw new Error(`invalid createFieldNote arguments: ${parsed.error.message}`);
+  }
+  const draft = await createFieldNote(LOCAL_OWNER_ID, parsed.data, {
+    source: "assistant",
+    status: "draft",
+    sourceSessionId: context.sessionId,
+  });
+  return {
+    id: draft.id,
+    status: draft.status,
+    message: "Draft saved — awaiting your review in Notes.",
   };
 }
 

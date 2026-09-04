@@ -18,6 +18,9 @@ const EXPECTED_TOOL_NAMES = [
   "listSessionSummaries",
   "getSessionSummary",
   "getHandbookEntry",
+  "searchFieldNotes",
+  "getFieldNote",
+  "createFieldNote",
   "askClarifyingQuestion",
 ];
 

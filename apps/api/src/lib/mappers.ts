@@ -87,6 +87,33 @@ export function mapWatch(row: any) {
   };
 }
 
+export function mapFieldNote(
+  row: any,
+  links: { productIds?: string[]; tags?: string[]; handbookSlugs?: string[] } = {}
+) {
+  return {
+    id: row.id,
+    ownerId: row.owner_id,
+    title: row.title,
+    body: row.body,
+    symptom: row.symptom ?? null,
+    cause: row.cause ?? null,
+    resolution: row.resolution ?? null,
+    brand: row.brand ?? null,
+    model: row.model ?? null,
+    modelYearFrom: toNumber(row.model_year_from ?? null),
+    modelYearTo: toNumber(row.model_year_to ?? null),
+    status: row.status,
+    source: row.source,
+    sourceSessionId: row.source_session_id ?? null,
+    productIds: links.productIds ?? [],
+    tags: links.tags ?? [],
+    handbookSlugs: links.handbookSlugs ?? [],
+    createdAt: toIso(row.created_at),
+    updatedAt: toIso(row.updated_at),
+  };
+}
+
 export function mapListingVariant(row: any) {
   let options: { name: string; value: string }[] = [];
   try {

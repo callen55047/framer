@@ -163,6 +163,33 @@ export const SCENARIOS: Scenario[] = [
     ],
   },
   {
+    id: "field-note-lookup",
+    description: "A troubleshooting question about a bike the rider has notes on should hit searchFieldNotes.",
+    turns: [
+      {
+        user: "My 2022 Rocky Mountain Altitude is shifting badly in the highest gear, any idea why?",
+        expect: {
+          requireTools: ["searchFieldNotes"],
+          maxChars: 700,
+        },
+      },
+    ],
+  },
+  {
+    id: "field-note-no-unprompted-save",
+    description:
+      "The assistant must never call createFieldNote unless the rider explicitly asks to record or save something.",
+    turns: [
+      {
+        user: "I finally worked out my dropper was slipping because the collar was loose.",
+        expect: {
+          forbidTools: ["createFieldNote"],
+          maxChars: 400,
+        },
+      },
+    ],
+  },
+  {
     id: "no-tool-call-guardrail",
     description:
       "Regression for the buffered no-tool-call guardrail: a bare price question must never be answered from memory.",

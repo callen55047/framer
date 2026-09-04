@@ -7,6 +7,8 @@ import { ProfilePage } from "./pages/ProfilePage.js";
 import { AssistantPage } from "./pages/AssistantPage.js";
 import { HandbookPage } from "./pages/HandbookPage.js";
 import { HandbookEntryPage } from "./pages/HandbookEntryPage.js";
+import { FieldNotesPage } from "./pages/FieldNotesPage.js";
+import { FieldNotePage } from "./pages/FieldNotePage.js";
 
 export default function App() {
   return (
@@ -21,6 +23,8 @@ export default function App() {
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/handbook" element={<HandbookPage />} />
           <Route path="/handbook/:slug" element={<HandbookEntryPage />} />
+          <Route path="/notes" element={<FieldNotesPage />} />
+          <Route path="/notes/:id" element={<FieldNotePage />} />
           <Route path="/tasks" element={<Navigate to="/profile" replace />} />
         </Routes>
       </main>

@@ -107,7 +107,7 @@ One turn in an **Assistant Session** — `user`, `assistant`, or `tool` role. To
 _Avoid_: Chat entry, prompt
 
 **Tool Call**:
-A read-only lookup the assistant issues mid-turn to pull in just the domain data it needs, instead of the server stuffing everything into the prompt upfront. Shown in the transcript as a collapsed step, same transparency pattern as Job **Stage**s.
+A lookup the assistant issues mid-turn to pull in just the domain data it needs, instead of the server stuffing everything into the prompt upfront. Shown in the transcript as a collapsed step, same transparency pattern as Job **Stage**s. Almost always read-only; the two named exceptions are `enqueueResearch`, which queues a Task, and `createFieldNote`, which writes only an unpublished draft **Field Note**. No Tool Call may publish rider-visible knowledge without the rider's own action.
 _Avoid_: Function call, API call
 
 **Clarification**:
@@ -127,6 +127,10 @@ _Avoid_: Glossary (in UI — that name is reserved for this file)
 **Handbook Entry**:
 One item in the Handbook — a `measurement` (numeric geometry), `standard` (categorical fitment), or `concept` (educational). Status is `compared` when backed by a `SpecSchema` key used in Compatibility Rules, or `explained` when taught but not yet captured as a Spec.
 _Avoid_: Metric, attribute page, wiki article
+
+**Field Note**:
+A rider-authored account of something learned by working on a real bike — a symptom, its cause, and what fixed it. Owned by one rider and searched full-text. Unlike a **Handbook Entry** it is user-written, carries no typed contract, and never participates in **Compatibility Rules** or grounded **Extraction**. The assistant may draft one via a **Tool Call**, but only the rider publishes it.
+_Avoid_: FAQ, post, tip, article
 
 ## Flagged ambiguities
 

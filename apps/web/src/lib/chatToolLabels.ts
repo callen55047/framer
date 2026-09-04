@@ -19,6 +19,9 @@ export const CHAT_TOOL_LABELS: Record<string, { active: string; done: string }> 
   listSessionSummaries: { active: "Listing past sessions…", done: "Listed past sessions" },
   getSessionSummary: { active: "Loading session summary…", done: "Loaded session summary" },
   getHandbookEntry: { active: "Loading handbook entry…", done: "Loaded handbook entry" },
+  searchFieldNotes: { active: "Checking your notes…", done: "Checked your notes" },
+  getFieldNote: { active: "Loading note…", done: "Loaded note" },
+  createFieldNote: { active: "Drafting a note…", done: "Drafted a note for review" },
   askClarifyingQuestion: { active: "Working out what to ask…", done: "Asked a question" },
 };
 

@@ -13,6 +13,7 @@ import { chatRouter } from "./routes/chat.js";
 import { runnerChatRouter } from "./routes/runnerChat.js";
 import { runnerProductsRouter } from "./routes/runnerProducts.js";
 import { handbookRouter } from "./routes/handbook.js";
+import { fieldNotesRouter } from "./routes/fieldNotes.js";
 
 export function createApp(): express.Express {
   const app = express();
@@ -31,6 +32,7 @@ export function createApp(): express.Express {
   app.use("/api/runner/chat", runnerChatRouter);
   app.use("/api/runner/products", runnerProductsRouter);
   app.use("/api/handbook", handbookRouter);
+  app.use("/api/field-notes", fieldNotesRouter);
 
   const webDist = config.webDistPath;
   if (existsSync(webDist)) {

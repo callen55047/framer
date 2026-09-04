@@ -1,4 +1,4 @@
-import { Bike, BookOpen, Eye, Home, MessageCircle, User } from "lucide-react";
+import { Bike, BookOpen, Eye, Home, MessageCircle, NotebookPen, User } from "lucide-react";
 import { NavLink } from "react-router-dom";
 
 const NAV_ITEMS = [
@@ -8,6 +8,7 @@ const NAV_ITEMS = [
   { to: "/assistant", icon: MessageCircle, label: "Assistant" },
   { to: "/profile", icon: User, label: "Profile" },
   { to: "/handbook", icon: BookOpen, label: "Handbook" },
+  { to: "/notes", icon: NotebookPen, label: "Field Notes" },
 ];
 
 export function Sidebar() {

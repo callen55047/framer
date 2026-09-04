@@ -226,6 +226,48 @@ export interface HandbookCatalog {
   specSourceNote: string;
 }
 
+export interface FieldNote {
+  id: string;
+  ownerId: string;
+  title: string;
+  body: string;
+  symptom: string | null;
+  cause: string | null;
+  resolution: string | null;
+  brand: string | null;
+  model: string | null;
+  modelYearFrom: number | null;
+  modelYearTo: number | null;
+  status: "draft" | "published";
+  source: "user" | "assistant";
+  sourceSessionId: string | null;
+  productIds: string[];
+  tags: string[];
+  handbookSlugs: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface FieldNoteInput {
+  title: string;
+  body: string;
+  symptom?: string;
+  cause?: string;
+  resolution?: string;
+  brand?: string;
+  model?: string;
+  modelYearFrom?: number;
+  modelYearTo?: number;
+  productIds?: string[];
+  tags?: string[];
+  handbookSlugs?: string[];
+}
+
+export interface FieldNoteTagCount {
+  tag: string;
+  count: number;
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`/api${path}`, {
     ...init,
@@ -285,6 +327,26 @@ export const api = {
     request<{ messages: ChatMessage[] }>(`/chat/sessions/${sessionId}/messages`),
   getHandbook: () => request<HandbookCatalog>("/handbook"),
   getHandbookEntry: (slug: string) => request<{ entry: HandbookEntry }>(`/handbook/${slug}`),
+  listFieldNotes: (filter: { query?: string; brand?: string; model?: string; modelYear?: number; tag?: string } = {}) => {
+    const params = new URLSearchParams();
+    if (filter.query) params.set("query", filter.query);
+    if (filter.brand) params.set("brand", filter.brand);
+    if (filter.model) params.set("model", filter.model);
+    if (filter.modelYear) params.set("modelYear", String(filter.modelYear));
+    if (filter.tag) params.set("tag", filter.tag);
+    const qs = params.toString();
+    return request<{ notes: FieldNote[] }>(`/field-notes${qs ? `?${qs}` : ""}`);
+  },
+  listFieldNoteDrafts: () => request<{ drafts: FieldNote[] }>("/field-notes/drafts"),
+  listFieldNoteTags: () => request<{ tags: FieldNoteTagCount[] }>("/field-notes/tags"),
+  getFieldNote: (id: string) => request<{ note: FieldNote }>(`/field-notes/${id}`),
+  createFieldNote: (input: FieldNoteInput) =>
+    request<{ note: FieldNote }>("/field-notes", { method: "POST", body: JSON.stringify(input) }),
+  updateFieldNote: (id: string, input: Partial<FieldNoteInput>) =>
+    request<{ note: FieldNote }>(`/field-notes/${id}`, { method: "PATCH", body: JSON.stringify(input) }),
+  confirmFieldNoteDraft: (id: string) =>
+    request<{ note: FieldNote }>(`/field-notes/${id}/confirm`, { method: "POST" }),
+  deleteFieldNote: (id: string) => request<void>(`/field-notes/${id}`, { method: "DELETE" }),
   sendChatMessage: async (sessionId: string, content: string, handlers: ChatStreamHandlers = {}) => {
     const res = await fetch(`/api/chat/sessions/${sessionId}/messages`, {
       method: "POST",

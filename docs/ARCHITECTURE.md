@@ -116,6 +116,8 @@ All routes mount under the single Express app in `apps/api/src/app.ts`.
 | `/api/runner/listings` | `AGENT_TOKEN` | Kind-specific writes from executor (price points) |
 | `/api/runner/watches` | `AGENT_TOKEN` | Sweep-related runner callbacks |
 | `/api/runner/chat` | `AGENT_TOKEN` | Session summary persistence from executor |
+| `/api/handbook` | none | Code-authoritative Handbook catalog and entries |
+| `/api/field-notes` | user session | Field Note CRUD, search, and draft confirm/discard |
 
 Static files from `WEB_DIST_PATH` are served at `/`. Unmatched non-API paths fall through to `index.html` for client-side routing.
 
@@ -133,6 +135,8 @@ Sidebar navigation (`apps/web/src/components/Sidebar.tsx`) maps to React Router 
 | `/tasks` | TasksPage | Task/job status and stage timeline |
 | `/assistant` | AssistantPage | AI assistant sessions |
 | `/profile` | ProfilePage | Owner settings |
+| `/handbook`, `/handbook/:slug` | HandbookPage, HandbookEntryPage | Code-authoritative Handbook |
+| `/notes`, `/notes/:id` | FieldNotesPage, FieldNotePage | Rider-authored Field Notes: search, create/edit, draft review |
 
 Layout: fixed narrow sidebar (icon nav) + scrollable main content area.
 
@@ -234,6 +238,7 @@ Assistant Sessions are persisted conversations with a 128k-token context budget.
 - **No-tool-call guardrail** — the first attempt at a turn is buffered rather than streamed live. If it comes back with no tool calls and no clarification, the reply is discarded, a one-time nudge is appended (not persisted), and the turn retries — this stops the model from answering bike/parts/price questions from memory instead of looking them up. The retry itself streams normally, whether it ends up calling a tool or answering off-topic in character
 - **Clarification** — the assistant ends its turn by calling `askClarifyingQuestion`; persisted as an assistant Message with `toolName` set and options in `toolArgs`, streamed as a `clarification` SSE event, rendered as tappable chips. Lookups issued in the same iteration run first
 - **Catalog price tools** — `searchProducts` (category/year filters, cheapest live price), `getProductListings`, `getPriceHistory`, `listRetailers`. The derived Product price (cheapest in-stock, new, active Listing) lives in `productListingsService.ts`
+- **Field Notes** — `searchFieldNotes` and `getFieldNote` are read-only lookups over the rider's own published notes (`fieldNoteService.ts`, SQLite FTS5 ranked with `bm25()`). `createFieldNote` is the one Tool Call that writes: it persists a `draft`, invisible to search until the rider confirms it in `/notes`. The assistant only calls it when explicitly asked to record something, and must never claim a draft is saved
 - **Session Summary** — compressed by a background `SummarizeChatSession` Job after idle; read by a *later* Session via tool call, never injected into the current turn's context
 - **Assistant Benchmark** — scores `SYSTEM_PROMPT` bets (tool routing, tone, the no-tool-call guardrail) against a live model over scripted Scenarios, sampled to account for non-determinism. See [local-model-benchmarks.md](./local-model-benchmarks.md#assistant-benchmark)
 
@@ -295,3 +300,15 @@ The Runner executes Jobs using a local model and scrapes from the machine it run
 **Rejected:** letting research Scenarios hit the real fetch allowlist. Two nondeterministic inputs (model + network) means a failed run never tells you which one moved, and it hammers manufacturer/retailer sites on every run.
 
 **Chosen:** recorded reference pages replayed from disk (`apps/api/fixtures/assistant-benchmark/pages/`), the same discipline as the **Artifact** replay pattern used for extraction. Only the model is live.
+
+### Code-authoritative Field Notes, like the Handbook
+
+**Rejected:** storing Field Notes as JSON + markdown in `packages/schema/data/`, the Handbook's pattern (ADR 0001). That pattern exists because a `compared` Handbook entry must map 1:1 onto a `SpecSchema` key that Compatibility Rules and grounded Extraction depend on — a typed contract worth a commit-and-review cycle. A Field Note makes no such claim; it is written from the garage, at the moment something is learned, and gains nothing from a build step.
+
+**Chosen:** a DB-backed, owner-scoped table with a SQLite FTS5 index. See [Assistant](#assistant) and `packages/schema/src/fieldNote.ts`.
+
+### Forum-style Field Notes with comments and agree/disagree
+
+**Rejected:** a shared knowledge base where other riders comment on and vote on a Field Note. There is one local owner and no login (see the **Owner** bootstrap in `packages/schema/src/owner.ts`) — "other users" have nowhere to come from yet, and building accounts/auth to support voting is a large, orthogonal piece of work the knowledge base doesn't need to ship.
+
+**Chosen:** personal notes only, no comments, no voting. Every row still carries `owner_id`, following the same "auth is additive" bet as every other owner-scoped table, so a social layer remains a schema addition rather than a rewrite if it's ever built.

@@ -36,6 +36,9 @@ export const LISTING_FORK36_USED = "20000000-0000-4000-8000-000000000009"; // us
 export const WATCH_ALTITUDE_PRODUCT = "30000000-0000-4000-8000-000000000001"; // Product-target
 export const WATCH_FORK36_LISTING = "30000000-0000-4000-8000-000000000002"; // Listing-target
 
+// Field Notes
+export const FIELD_NOTE_ALTITUDE_FLIP_CHIP = "40000000-0000-4000-8000-000000000001"; // Rocky Mountain Altitude 2021-2023, flip chip / B-tension
+
 /** Planted gap: nothing in the catalog or reference registry answers this. */
 export const GAP_BRAND = "Nukeproof";
 export const GAP_MODEL = "Giga";
@@ -149,5 +152,36 @@ export async function seedAssistantBenchmarkCatalog(db: DbClient): Promise<void>
       ($1, $2, 'product', $3, null),
       ($4, $2, 'listing', null, $5)`,
     [WATCH_ALTITUDE_PRODUCT, LOCAL_OWNER_ID, FRAME_ALTITUDE, WATCH_FORK36_LISTING, LISTING_FORK36_JENSON]
+  );
+
+  // Field Note backing the "field-note-lookup" Scenario — see CONTEXT.md#Knowledge.
+  await q(
+    `insert into field_notes
+       (id, owner_id, title, body, symptom, cause, resolution, brand, model, model_year_from, model_year_to)
+     values ($1, $2, $3, $4, $5, $6, $7, 'Rocky Mountain', 'Altitude', 2021, 2023)`,
+    [
+      FIELD_NOTE_ALTITUDE_FLIP_CHIP,
+      LOCAL_OWNER_ID,
+      "Flip chip to short — B-tension needs resetting",
+      "Bought the bike with the rear axle flip chip in the long position and the drivetrain was fine. Flipped the chip to short, moving the axle 10mm forward for a shorter chainstay and wheelbase. After that the derailleur wasn't shifting properly — in the highest gear the chain was actually colliding with the derailleur body. Same chain, 10mm shorter chainstay, so the geometry the derailleur was set up for had changed. Backed off the B-tension screw until there were a few mm of clearance in the highest gear, and it went back to shifting cleanly through the whole range.",
+      "Chain colliding with the derailleur body in the highest gear after flipping the chip to short",
+      "Same chain length on a 10mm shorter chainstay changed how much tension the derailleur needed",
+      "Backed off the B-tension screw for a few mm of clearance",
+    ]
+  );
+  await q(`insert into field_note_tags (note_id, tag) values ($1, 'flip-chip'), ($1, 'drivetrain'), ($1, 'b-tension'), ($1, 'chainstay')`, [
+    FIELD_NOTE_ALTITUDE_FLIP_CHIP,
+  ]);
+  await q(
+    `insert into field_notes_fts (note_id, title, body, symptom, cause, resolution, bike, tags) values
+      ($1, $2, $3, $4, $5, $6, 'Rocky Mountain Altitude', 'flip-chip drivetrain b-tension chainstay')`,
+    [
+      FIELD_NOTE_ALTITUDE_FLIP_CHIP,
+      "Flip chip to short — B-tension needs resetting",
+      "Bought the bike with the rear axle flip chip in the long position and the drivetrain was fine. Flipped the chip to short, moving the axle 10mm forward for a shorter chainstay and wheelbase. After that the derailleur wasn't shifting properly — in the highest gear the chain was actually colliding with the derailleur body. Same chain, 10mm shorter chainstay, so the geometry the derailleur was set up for had changed. Backed off the B-tension screw until there were a few mm of clearance in the highest gear, and it went back to shifting cleanly through the whole range.",
+      "Chain colliding with the derailleur body in the highest gear after flipping the chip to short",
+      "Same chain length on a 10mm shorter chainstay changed how much tension the derailleur needed",
+      "Backed off the B-tension screw for a few mm of clearance",
+    ]
   );
 }
